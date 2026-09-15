@@ -27,42 +27,13 @@
   })();
 </script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  // Semantic tokens, resolved from CSS custom properties. Because each token is
-  // stored as raw RGB channels, Tailwind's alpha modifiers (bg-surface/70) work.
-  const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
-  tailwind.config = {
-    darkMode: ['class', '[data-theme="dark"]'],
-    theme: {
-      extend: {
-        colors: {
-          bg:        token('bg'),
-          surface:   token('surface'),
-          surface2:  token('surface-2'),
-          deep:      token('deep'),
-          deep2:     token('deep-2'),
-          ink:       token('text'),
-          muted:     token('muted'),
-          ondeep:    token('on-deep'),
-          line:      token('border'),
-          lineStrong:token('border-strong'),
-          sky:     { brand: token('brand-sky'),   dark: token('brand-sky-dk') },
-          magenta: { brand: token('brand-magenta') },
-          amber:   { brand: token('brand-amber'), deep: token('brand-amber-dk') },
-        },
-        fontFamily: {
-          sans:    ['Inter', 'system-ui', 'sans-serif'],
-          display: ['Fraunces', 'Georgia', 'serif'],
-          mono:    ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
-        },
-      },
-    },
-  };
-</script>
+<!-- Tailwind is compiled at build time into app.css. The Play CDN used to
+     do this in the browser, which left phones on mobile data rendering an
+     unstyled, overflowing page until the compiler finished downloading. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/app.css" />
 <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
@@ -106,7 +77,7 @@
       <p class="mt-1.5 text-sm text-muted">Create, publish and manage what appears on the public site.</p>
     </div>
     <button id="newEventBtn" type="button"
-            class="rounded-full bg-amber-brand px-5 py-2.5 text-sm font-bold text-deep2 shadow-sm transition hover:bg-amber-deep hover:text-white">
+            class="rounded-full bg-amber-brand px-5 py-2.5 text-sm font-bold text-deep2 shadow-sm transition hover:brightness-110">
       + New event
     </button>
   </div>
@@ -262,7 +233,7 @@
     <p id="confirmBody" class="mt-2 text-sm text-muted">This removes the event and its poster permanently.</p>
     <div class="mt-6 flex justify-end gap-3">
       <button type="button" id="confirmCancel" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-ink/60 hover:text-ink">Cancel</button>
-      <button type="button" id="confirmOk" class="rounded-xl bg-magenta-brand px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Delete</button>
+      <button type="button" id="confirmOk" class="rounded-xl bg-magenta-fill px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Delete</button>
     </div>
   </div>
 </div>

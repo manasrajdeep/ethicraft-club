@@ -188,11 +188,11 @@
                  data-src="${esc(event.posterPath)}" data-title="${esc(event.title)}">
            <img src="${esc(event.posterPath)}" alt="Poster for ${esc(event.title)}" loading="lazy"
                 class="ec-poster transition duration-500 group-hover:scale-[1.03]" />
-           <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-dark/70 to-transparent p-3 text-left text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
+           <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-deep2/70 to-transparent p-3 text-left text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
              View full poster
            </span>
          </button>`
-      : `<div class="grid h-40 place-items-center rounded-t-2xl bg-gradient-to-br from-navy-brand to-sky-dark">
+      : `<div class="grid h-40 place-items-center rounded-t-2xl bg-gradient-to-br from-deep to-sky-dark">
            <img src="/assets/logo.png" alt="" class="h-16 w-16 opacity-90" />
          </div>`;
 

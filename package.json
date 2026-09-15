@@ -15,7 +15,9 @@
     "reset-db": "node scripts/reset-db.js",
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
-    "test:responsive": "node test/responsive-audit.js"
+    "test:responsive": "node test/responsive-audit.js",
+    "build": "tailwindcss -i src/app.css -o public/css/app.css --minify",
+    "build:watch": "tailwindcss -i src/app.css -o public/css/app.css --watch"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -27,7 +29,8 @@
     "express-session": "^1.18.1",
     "helmet": "^8.3.0",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
     "puppeteer": "^25.11.0"

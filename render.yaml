@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     region: singapore          # closest Render region to Pune
-    buildCommand: npm ci
+    buildCommand: npm ci && npm run build
     startCommand: node server/index.js
     healthCheckPath: /healthz
     envVars:

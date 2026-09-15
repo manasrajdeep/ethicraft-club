@@ -31,7 +31,7 @@
   function toast(message, kind = 'success') {
     const host = $('#toast');
     const palette = kind === 'error'
-      ? 'bg-magenta-brand text-white'
+      ? 'bg-magenta-fill text-white'
       : 'bg-deep text-white';
     host.innerHTML = `<div class="pointer-events-auto rounded-full ${palette} px-5 py-3 text-sm font-semibold shadow-xl">${esc(message)}</div>`;
     clearTimeout(toastTimer);
@@ -275,7 +275,7 @@
          </div>`;
 
     return `
-      <article class="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-line sm:flex-row sm:items-center">
+      <article class="flex flex-col gap-4 rounded-2xl bg-surface p-4 shadow-sm ring-1 ring-line sm:flex-row sm:items-center">
         <div class="flex min-w-0 flex-1 items-start gap-4">
           ${thumb}
           <div class="min-w-0">
@@ -332,7 +332,7 @@
            </div>`;
       paintStats();
     } catch (err) {
-      list.innerHTML = `<div class="rounded-2xl bg-white px-6 py-12 text-center text-sm text-magenta-brand">${esc(err.message)}</div>`;
+      list.innerHTML = `<div class="rounded-2xl bg-surface px-6 py-12 text-center text-sm text-magenta-brand">${esc(err.message)}</div>`;
     }
   }
 

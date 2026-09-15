@@ -639,6 +639,39 @@ describe('responsive', () => {
     assert.ok((html.match(/ec-taplink/g) || []).length >= 4, 'footer links tagged');
   });
 
+  test('CSS is precompiled, not generated in the browser', async () => {
+    for (const page of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+      const html = await (await fetch(`${base}${page}`)).text();
+      assert.doesNotMatch(html, /cdn\.tailwindcss\.com/,
+        `${page} must not load a runtime CSS compiler - it leaves phones on slow ` +
+        'connections rendering an unstyled, overflowing page');
+      assert.match(html, /href="\/css\/app\.css"/, `${page} links the built stylesheet`);
+    }
+    const css = await (await fetch(`${base}/css/app.css`));
+    assert.equal(css.status, 200);
+    const body = await css.text();
+    assert.ok(body.length > 5000, 'built stylesheet is non-trivial');
+    assert.match(body, /--tw-/, 'looks like real Tailwind output');
+  });
+
+  test('the build emits the utilities used by JS-rendered cards', async () => {
+    const css = await (await fetch(`${base}/css/app.css`)).text();
+    const emitted = new Set();
+    for (const m of css.matchAll(/\.((?:[\w-]|\\.)+)/g)) emitted.add(m[1].replace(/\\(.)/g, '$1'));
+    // These only ever appear inside template literals in main.js, so a content
+    // path that missed the JS would silently drop them.
+    for (const c of ['bg-surface2', 'text-muted', 'from-deep2/70', 'to-sky-dark', 'md:grid-cols-2']) {
+      assert.ok(emitted.has(c), `utility "${c}" missing from the build`);
+    }
+  });
+
+  test('CSP no longer needs eval now that Tailwind is precompiled', async () => {
+    const csp = (await fetch(`${base}/`)).headers.get('content-security-policy');
+    assert.ok(csp, 'CSP present');
+    assert.doesNotMatch(csp, /unsafe-eval/, 'eval is only needed by a runtime compiler');
+    assert.doesNotMatch(csp, /cdn\.tailwindcss\.com/);
+  });
+
   test('content is readable with JavaScript disabled', async () => {
     const css = await (await fetch(`${base}/css/styles.css`)).text();
     assert.match(css, /\.no-js \.ec-reveal \{ opacity: 1/, 'no-js fallback present');

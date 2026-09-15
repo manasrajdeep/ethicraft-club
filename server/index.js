@@ -70,9 +70,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      // Tailwind's Play CDN compiles at runtime, so it needs eval. Swapping to
-      // a build step (see README) lets both unsafe-* directives be dropped.
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com'],
+      // Tailwind is compiled at build time, so no CDN and no eval. 'unsafe-inline'
+      // remains only for the small inline theme bootstrap that must run before
+      // first paint to avoid a flash of the wrong colour scheme.
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       imgSrc: ["'self'", 'data:', 'blob:'],

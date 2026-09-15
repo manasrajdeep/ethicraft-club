@@ -34,6 +34,9 @@
   --brand-sky:     69 190 232;
   --brand-sky-dk:  21 117 151;   /* darkened from #1c9cc9: needs 4.5:1 for chip text */
   --brand-magenta:192  57 143;
+  /* Solid button fills keep this darker value in BOTH themes so white label
+     text stays legible; --brand-magenta lightens in dark mode for text use. */
+  --fill-magenta: 192  57 143;
   --brand-amber:  247 168  27;
   --brand-amber-dk: 150 104  34;  /* darkened from #d1902f: icons + chip text need AA */
 
@@ -72,6 +75,7 @@
   --brand-sky:     108 207 240;
   --brand-sky-dk:   69 190 232;
   --brand-magenta: 232 106 184;
+  --fill-magenta:  192  57 143;   /* deliberately unchanged: see :root */
   --brand-amber:   251 191  60;
   --brand-amber-dk:247 168  27;
 
