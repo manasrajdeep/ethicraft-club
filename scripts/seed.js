@@ -26,6 +26,7 @@ const INITIAL_EVENTS = [
     mode: 'Zoom',
     venue: '',
     zoom_link: 'https://zoom.us/j/0000000000',
+    registration_link: 'https://tinyurl.com/ethicraftpict',
     topics: JSON.stringify(['Placements', 'Campus Life', "Role of AI in today's World"]),
     published: true,
   },
@@ -41,19 +42,33 @@ async function seedIfEmpty() {
     await query(`
       INSERT INTO events
         (title, subtitle, description, event_date, start_time, end_time,
-         mode, venue, zoom_link, topics, published, poster_data, poster_type, poster_name)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         mode, venue, zoom_link, registration_link, topics, published,
+         poster_data, poster_type, poster_name)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
     `, [
       event.title, event.subtitle, event.description, event.event_date,
       event.start_time, event.end_time, event.mode, event.venue, event.zoom_link,
-      event.topics, event.published,
+      event.registration_link, event.topics, event.published,
       poster, poster ? 'image/jpeg' : null, poster ? 'alumni-tales.jpg' : null,
     ]);
   }
   return true;
 }
 
-module.exports = { seedIfEmpty, INITIAL_EVENTS };
+/**
+ * The launch event was already seeded before registration links existed, so the
+ * live row has an empty link that seedIfEmpty will never revisit. Fill it in
+ * once, and only while it is still blank, so an admin edit is never overwritten.
+ */
+async function backfillRegistrationLink() {
+  const { rowCount } = await query(
+    `UPDATE events SET registration_link = $1
+      WHERE title = $2 AND (registration_link IS NULL OR registration_link = '')`,
+    ['https://tinyurl.com/ethicraftpict', 'From Then to Now: Alumni Tales']);
+  return rowCount;
+}
+
+module.exports = { seedIfEmpty, backfillRegistrationLink, INITIAL_EVENTS };
 
 // `npm run seed` runs this file directly.
 if (require.main === module) {

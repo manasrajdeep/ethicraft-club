@@ -196,16 +196,30 @@
            <img src="/assets/logo.png" alt="" class="h-16 w-16 opacity-90" />
          </div>`;
 
-    // Past events keep the link visible but inert — it tells people where it happened.
+    const arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+      + 'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+
+    // Registering comes before joining, so it leads. Once an event is past,
+    // both links are dropped rather than left to disappoint.
+    const register = !isPast && event.registrationLink
+      ? `<a href="${esc(event.registrationLink)}" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full bg-amber-brand px-5 py-2.5 text-sm font-bold text-deep2 shadow-sm transition hover:brightness-110">
+           Register now ${arrow}
+         </a>`
+      : '';
+
+    const join = !isPast && event.zoomLink
+      ? `<a href="${esc(event.zoomLink)}" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full ${register ? 'border border-line px-5 py-2.5 text-ink/80 hover:border-sky-brand hover:text-ink' : 'bg-deep px-5 py-2.5 text-white hover:bg-sky-dark'} text-sm font-bold transition">
+           Join the session ${register ? '' : arrow}
+         </a>`
+      : '';
+
     const action = isPast
-      ? `<span class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-ink/40">Session concluded</span>`
-      : event.zoomLink
-        ? `<a href="${esc(event.zoomLink)}" target="_blank" rel="noopener noreferrer"
-              class="mt-5 inline-flex items-center gap-2 rounded-full bg-deep px-5 py-2.5 text-sm font-bold text-white transition hover:bg-sky-dark">
-             Join the session
-             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
-           </a>`
-        : `<span class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-ink/50">Joining details coming soon</span>`;
+      ? `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/40">Session concluded</span>`
+      : (register || join)
+        ? `${register}${join}`
+        : `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/50">Joining details coming soon</span>`;
 
     return `
       <article class="ec-card ec-bracket ec-reveal flex flex-col overflow-hidden text-ink ${isPast ? 'opacity-90' : ''}">
@@ -380,10 +394,17 @@
 
           <div id="countdown" class="mt-5" aria-live="off"></div>
 
-          <div class="mt-5 flex gap-2">
+          ${event.registrationLink ? `
+            <a href="${esc(event.registrationLink)}" target="_blank" rel="noopener noreferrer"
+               class="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-amber-brand px-5 py-3.5 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
+              Register now
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+            </a>` : ''}
+
+          <div class="mt-3 flex gap-2">
             ${event.zoomLink ? `
               <a href="${esc(event.zoomLink)}" target="_blank" rel="noopener noreferrer"
-                 class="flex-1 rounded-full bg-white px-5 py-3 text-center text-sm font-bold text-deep2 transition hover:bg-amber-brand">
+                 class="flex-1 rounded-full ${event.registrationLink ? 'border border-white/25 text-white hover:bg-white/10' : 'bg-white text-deep2 hover:bg-amber-brand'} px-5 py-3 text-center text-sm font-bold transition">
                 Join on Zoom
               </a>` : ''}
             <button type="button" class="js-ics ec-label rounded-full border border-white/25 px-4 py-3 text-white/75 transition hover:border-white hover:text-white" data-id="${event.id}">

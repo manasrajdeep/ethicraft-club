@@ -15,7 +15,7 @@ const { pool, query, migrate, ensureAdminUser, close } = require('./db');
 const { requireAuthPage } = require('./auth');
 const adminRoutes = require('./routes/admin');
 const { router: eventRoutes } = require('./routes/events');
-const { seedIfEmpty } = require('../scripts/seed');
+const { seedIfEmpty, backfillRegistrationLink } = require('../scripts/seed');
 const { buildSitemap, buildRobots } = require('./seo');
 
 const app = express();
@@ -230,6 +230,7 @@ async function start() {
   await migrate();
   await ensureAdminUser();
   await seedIfEmpty();
+  await backfillRegistrationLink();
 
   server = app.listen(PORT, () => {
     console.log(`\n  EthiCraft Club — ${IS_PROD ? 'production' : 'development'}`);

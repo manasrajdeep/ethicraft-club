@@ -131,6 +131,7 @@
       $('#mode').value = event.mode;
       $('#venue').value = event.venue;
       $('#zoomLink').value = event.zoomLink;
+      $('#registrationLink').value = event.registrationLink || '';
       $('#topics').value = event.topics.join(', ');
       $('#published').checked = event.published;
       if (event.posterPath) {
@@ -229,6 +230,7 @@
     body.append('mode', $('#mode').value);
     body.append('venue', $('#mode').value === 'Zoom' ? '' : $('#venue').value.trim());
     body.append('zoomLink', $('#mode').value === 'Offline' ? '' : $('#zoomLink').value.trim());
+    body.append('registrationLink', $('#registrationLink').value.trim());
     body.append('topics', $('#topics').value);
     body.append('published', $('#published').checked ? '1' : '0');
     if (id) body.append('removePoster', $('#removePoster').value);

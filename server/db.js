@@ -66,6 +66,7 @@ async function migrate() {
       mode          TEXT NOT NULL DEFAULT 'Zoom',
       venue         TEXT NOT NULL DEFAULT '',
       zoom_link     TEXT NOT NULL DEFAULT '',
+      registration_link TEXT NOT NULL DEFAULT '',
       poster_data   BYTEA,
       poster_type   TEXT,
       poster_name   TEXT,
@@ -74,6 +75,10 @@ async function migrate() {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    -- Added after the first deploy, so CREATE TABLE alone would not reach an
+    -- existing database. Idempotent: safe on every boot.
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_link TEXT NOT NULL DEFAULT '';
 
     CREATE INDEX IF NOT EXISTS idx_events_date      ON events (event_date);
     CREATE INDEX IF NOT EXISTS idx_events_published ON events (published);
@@ -127,6 +132,7 @@ function rowToEvent(row) {
     mode: row.mode,
     venue: row.venue || '',
     zoomLink: row.zoom_link || '',
+    registrationLink: row.registration_link || '',
     // `has_poster` is computed in the SELECT so we never load the bytes to
     // answer "is there a poster?".
     posterPath: row.has_poster ? `/posters/${row.id}` : '',
@@ -140,7 +146,7 @@ function rowToEvent(row) {
 /** Column list shared by every event SELECT: everything except the bytes. */
 const EVENT_COLUMNS = `
   id, title, subtitle, description, event_date, start_time, end_time,
-  mode, venue, zoom_link, poster_type, poster_name, topics, published,
+  mode, venue, zoom_link, registration_link, poster_type, poster_name, topics, published,
   created_at, updated_at, (poster_data IS NOT NULL) AS has_poster
 `;
 

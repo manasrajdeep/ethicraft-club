@@ -163,6 +163,13 @@ describe('authentication', () => {
 /* ========================================================== public events API */
 
 describe('public events API', () => {
+  test('the seeded launch event carries the registration link', async () => {
+    const { events } = await json(await fetch(`${base}/api/events?scope=upcoming`));
+    const seeded = events.find((e) => e.title === 'From Then to Now: Alumni Tales');
+    assert.ok(seeded, 'seeded event present');
+    assert.equal(seeded.registrationLink, 'https://tinyurl.com/ethicraftpict');
+  });
+
   test('returns the seeded launch event', async () => {
     const { events } = await json(await fetch(`${base}/api/events?scope=upcoming`));
     const seeded = events.find((e) => e.title === 'From Then to Now: Alumni Tales');
@@ -223,6 +230,29 @@ describe('validation', () => {
   test('rejects an unknown mode', async () => {
     const res = await post({ title: 'T', eventDate: '2027-01-01', mode: 'Telepathy' });
     assert.equal(res.status, 400);
+  });
+
+  test('rejects non-http registration links', async () => {
+    for (const link of ['javascript:alert(1)', 'data:text/html,<script>', 'notaurl']) {
+      const res = await post({ title: 'T', eventDate: '2027-01-01', mode: 'Offline', registrationLink: link });
+      assert.equal(res.status, 400, `${link} should be rejected`);
+    }
+  });
+
+  test('a registration link round-trips and survives an unrelated edit', async () => {
+    const url = 'https://tinyurl.com/ethicraftpict';
+    const created = await json(await post({
+      title: 'Reg test', eventDate: '2027-07-07', mode: 'Offline', registrationLink: url,
+    }));
+    assert.equal(created.event.registrationLink, url);
+
+    // Editing only the title must not silently clear the link.
+    const updated = await json(await fetch(`${base}/api/admin/events/${created.event.id}`, {
+      method: 'PUT', headers: jar.header, body: formData({ title: 'Reg test renamed' }),
+    }));
+    assert.equal(updated.event.registrationLink, url, 'link preserved across a partial update');
+
+    await fetch(`${base}/api/admin/events/${created.event.id}`, { method: 'DELETE', headers: jar.header });
   });
 
   test('rejects non-http meeting links, including javascript:', async () => {

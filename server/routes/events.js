@@ -96,6 +96,12 @@ function validateEventBody(body, { partial = false } = {}) {
     else data.zoom_link = link;
   }
 
+  if (body.registrationLink !== undefined) {
+    const link = (body.registrationLink || '').trim();
+    if (link && !isHttpUrl(link)) errors.push('Registration link must be a valid http(s) URL.');
+    else data.registration_link = link;
+  }
+
   if (body.subtitle !== undefined) data.subtitle = (body.subtitle || '').trim().slice(0, 240);
   if (body.description !== undefined) data.description = (body.description || '').trim().slice(0, 4000);
   if (body.venue !== undefined) data.venue = (body.venue || '').trim().slice(0, 240);
@@ -270,6 +276,7 @@ router.put('/admin/events/:id', requireAuth, upload.single('poster'), async (req
       endTime: existing.end_time,
       mode: existing.mode,
       zoomLink: existing.zoom_link,
+      registrationLink: existing.registration_link,
       ...req.body,
     };
     if (merged.eventDate instanceof Date) {
