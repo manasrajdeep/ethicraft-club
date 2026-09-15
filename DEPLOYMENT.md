@@ -135,8 +135,8 @@ each of these:
 | --- | --- |
 | `NODE_ENV` | `production` |
 | `SITE_ORIGIN` | `https://ethicraft.in` |
-| `ADMIN_PATH` | `/adminkrsna` |
-| `ADMIN_USERNAME` | `harekrishna` |
+| `ADMIN_PATH` | your secret portal path, e.g. `/club-office` |
+| `ADMIN_USERNAME` | your admin username |
 | `ADMIN_PASSWORD` | your password |
 | `DATABASE_URL` | the Supabase line from step 2.3 |
 | `SESSION_SECRET` | see below |
@@ -229,7 +229,7 @@ month, which fits inside Render's 750-hour free allowance.
 
 ## Part 6 — First run (5 min)
 
-1. Go to **<https://ethicraft.in/adminkrsna>**.
+1. Go to **`https://ethicraft.in` + your `ADMIN_PATH`**.
 2. Sign in with your username and password.
 3. Open the Alumni Tales event and replace the placeholder Zoom link with the
    real one. Save.

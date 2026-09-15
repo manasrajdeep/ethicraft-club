@@ -30,7 +30,7 @@ const DEVICES = [
 
 const PAGES = [
   { path: '/', name: 'home' },
-  { path: '/adminkrsna/login', name: 'login' },
+  { path: `${require('./helpers').TEST_ADMIN.path}/login`, name: 'login' },
   { path: '/no-such-page', name: '404' },
 ];
 

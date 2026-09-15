@@ -15,7 +15,7 @@ services:
       - key: SITE_ORIGIN
         value: https://ethicraft.in
       - key: ADMIN_PATH
-        value: /adminkrsna
+        sync: false            # secret-ish: set in the dashboard, not in git
       - key: ADMIN_USERNAME
         sync: false            # set in the Render dashboard
       - key: ADMIN_PASSWORD

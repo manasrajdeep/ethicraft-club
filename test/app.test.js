@@ -2,7 +2,7 @@
 
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN } = require('./helpers');
+const { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN, TEST_ADMIN } = require('./helpers');
 
 let server, base;
 const jar = makeJar();
@@ -76,13 +76,13 @@ describe('security headers', () => {
 
 describe('admin portal location', () => {
   test('the configured admin path exists and is guarded', async () => {
-    const res = await fetch(`${base}/adminkrsna`, { redirect: 'manual' });
+    const res = await fetch(`${base}${TEST_ADMIN.path}`, { redirect: 'manual' });
     assert.equal(res.status, 302);
-    assert.equal(res.headers.get('location'), '/adminkrsna/login');
+    assert.equal(res.headers.get('location'), `${TEST_ADMIN.path}/login`);
   });
 
   test('the login screen is reachable', async () => {
-    const res = await fetch(`${base}/adminkrsna/login`);
+    const res = await fetch(`${base}${TEST_ADMIN.path}/login`);
     assert.equal(res.status, 200);
   });
 
@@ -101,7 +101,7 @@ describe('admin portal location', () => {
   });
 
   test('the admin page is noindex so it cannot be crawled into search results', async () => {
-    const res = await fetch(`${base}/adminkrsna/login`);
+    const res = await fetch(`${base}${TEST_ADMIN.path}/login`);
     assert.match(await res.text(), /name="robots"[^>]*noindex/);
   });
 });
@@ -115,13 +115,13 @@ describe('authentication', () => {
   });
 
   test('rejects a wrong password', async () => {
-    const res = await login(base, makeJar(), 'harekrishna', 'wrong-password');
+    const res = await login(base, makeJar(), TEST_ADMIN.username, 'wrong-password');
     assert.equal(res.status, 401);
     assert.match((await json(res)).error, /Incorrect/);
   });
 
   test('does not reveal whether a username exists', async () => {
-    const a = await json(await login(base, makeJar(), 'harekrishna', 'wrong'));
+    const a = await json(await login(base, makeJar(), TEST_ADMIN.username, 'wrong'));
     const b = await json(await login(base, makeJar(), 'no-such-user', 'wrong'));
     assert.equal(a.error, b.error);
   });
@@ -129,7 +129,7 @@ describe('authentication', () => {
   test('accepts the configured credentials and sets an HttpOnly cookie', async () => {
     const res = await login(base, jar);
     assert.equal(res.status, 200);
-    assert.equal((await json(res)).admin.username, 'harekrishna');
+    assert.equal((await json(res)).admin.username, TEST_ADMIN.username);
     const cookie = (res.headers.getSetCookie?.() || []).find((c) => c.startsWith('ethicraft.sid'));
     assert.ok(cookie, 'session cookie set');
     assert.match(cookie, /HttpOnly/i);
@@ -154,7 +154,7 @@ describe('authentication', () => {
   });
 
   test('the dashboard renders once signed in', async () => {
-    const res = await fetch(`${base}/adminkrsna`, { headers: jar.header });
+    const res = await fetch(`${base}${TEST_ADMIN.path}`, { headers: jar.header });
     assert.equal(res.status, 200);
     assert.match(await res.text(), /EthiCraft Admin/);
   });
@@ -416,7 +416,7 @@ describe('attack surface', () => {
   test('admin credentials are never echoed by any endpoint', async () => {
     for (const p of ['/api/config', '/healthz', '/api/admin/me', '/api/events?scope=all']) {
       const body = await (await fetch(`${base}${p}`, { headers: jar.header })).text();
-      assert.doesNotMatch(body, /haribol108|password_hash|SESSION_SECRET/i, `${p} leaks secrets`);
+      assert.doesNotMatch(new RegExp(TEST_ADMIN.password, 'i').test(body) ? 'LEAK' : body, /LEAK|password_hash|SESSION_SECRET/i, `${p} leaks secrets`);
     }
   });
 
@@ -453,7 +453,7 @@ describe('attack surface', () => {
   test('login is rate limited after repeated failures', async () => {
     let sawLimit = false;
     for (let i = 0; i < 30; i += 1) {
-      const res = await login(base, makeJar(), 'harekrishna', `wrong-${i}`);
+      const res = await login(base, makeJar(), TEST_ADMIN.username, `wrong-${i}`);
       if (res.status === 429) { sawLimit = true; break; }
     }
     assert.ok(sawLimit, 'brute force is throttled');
@@ -471,7 +471,7 @@ describe('SEO', () => {
 
   test('robots.txt does not advertise the admin path', async () => {
     const body = await (await fetch(`${base}/robots.txt`)).text();
-    assert.doesNotMatch(body, /adminkrsna/, 'naming it would defeat the point');
+    assert.doesNotMatch(body, new RegExp(TEST_ADMIN.path.slice(1)), 'naming it would defeat the point');
   });
 
   test('sitemap.xml is well-formed and absolute', async () => {
@@ -549,7 +549,7 @@ describe('frontend assets', () => {
   });
 
   test('theme toggle and no-flash script ship on every page', async () => {
-    for (const p of ['/', '/adminkrsna/login', '/no-such-page']) {
+    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       assert.match(html, /ethicraft-theme/, `${p} has the theme bootstrap`);
     }
@@ -568,7 +568,7 @@ describe('frontend assets', () => {
 
 describe('theme', () => {
   test('every page resolves the theme before first paint', async () => {
-    for (const p of ['/', '/adminkrsna/login', '/no-such-page']) {
+    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       const script = html.match(/Runs before first paint[\s\S]*?<\/script>/);
       assert.ok(script, `${p} has the theme bootstrap`);
@@ -616,7 +616,7 @@ describe('theme', () => {
 
 describe('responsive', () => {
   test('viewport meta allows zooming', async () => {
-    for (const p of ['/', '/adminkrsna/login', '/no-such-page']) {
+    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1"/);
       assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/,

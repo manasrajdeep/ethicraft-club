@@ -72,7 +72,7 @@ npm start          # or: npm run dev   (restarts on file changes)
 
 ```
 Public site  →  http://localhost:3000
-Admin portal →  http://localhost:3000/adminkrsna
+Admin portal →  http://localhost:3000<ADMIN_PATH>
 ```
 
 The admin portal is **deliberately not linked from the public site**. Its path
@@ -145,7 +145,7 @@ ethicraft-club/
 
 ## Using the admin portal
 
-1. Go to `http://localhost:3000/adminkrsna` and sign in.
+1. Go to `http://localhost:3000<ADMIN_PATH>` and sign in.
 2. Click **+ New event**.
 3. Fill in the title, tagline, date, start/end time and mode.
    * **Zoom** → a meeting link is required before the event can be published.

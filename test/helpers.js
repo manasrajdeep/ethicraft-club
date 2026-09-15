@@ -7,6 +7,17 @@ const crypto = require('node:crypto');
 const ROOT = path.join(__dirname, '..');
 
 /**
+ * Credentials for the disposable test server ONLY. Deliberately generic: the
+ * real portal path, username and password must never appear in the repository,
+ * which may be public. Production values come from the host's environment.
+ */
+const TEST_ADMIN = {
+  path: '/test-portal',
+  username: 'testadmin',
+  password: 'test-password-not-real',
+};
+
+/**
  * Boots the real server as a child process against a throwaway database, so the
  * suite exercises the actual wiring (helmet, sessions, rate limits) rather than
  * a stubbed app object.
@@ -31,9 +42,9 @@ async function startServer(env = {}) {
       NODE_ENV: 'test',
       PORT: String(port),
       DATABASE_URL: databaseUrl,
-      ADMIN_PATH: '/adminkrsna',
-      ADMIN_USERNAME: 'harekrishna',
-      ADMIN_PASSWORD: 'haribol108',
+      ADMIN_PATH: TEST_ADMIN.path,
+      ADMIN_USERNAME: TEST_ADMIN.username,
+      ADMIN_PASSWORD: TEST_ADMIN.password,
       SESSION_SECRET: 'test-secret-that-is-definitely-long-enough-000000',
       SITE_ORIGIN: 'https://ethicraft.in',
       ...env,
@@ -84,7 +95,7 @@ function makeJar() {
   };
 }
 
-async function login(base, jar, username = 'harekrishna', password = 'haribol108') {
+async function login(base, jar, username = TEST_ADMIN.username, password = TEST_ADMIN.password) {
   const res = await fetch(`${base}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -112,4 +123,4 @@ const JPEG_MIN = Buffer.from(
   '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==',
   'base64');
 
-module.exports = { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN, ROOT };
+module.exports = { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN, ROOT, TEST_ADMIN };
