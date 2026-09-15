@@ -301,6 +301,12 @@ header, main, footer { position: relative; z-index: 2; }
   opacity: .22;
 }
 
+@media (max-width: 767px) {
+  /* The mask covers a fixed fraction of the section, so on a much taller phone
+     layout far more of the grid stays visible. Lighten it to compensate. */
+  .ec-grid-bg { opacity: .45; background-size: 48px 48px; }
+}
+
 .ec-grid-bg {
   background-image:
     linear-gradient(rgb(var(--border-strong) / 45%) 1px, transparent 1px),
@@ -493,13 +499,21 @@ header, main, footer { position: relative; z-index: 2; }
 
 /* ---- Numbered index rows (replaces the 8-identical-cards grid) ---------- */
 
+/*
+ * A row holds three children: index, heading, description.
+ *
+ * On phones it MUST stack in one full-width column. A two-column grid here put
+ * the third child on a second row in the 3.5rem index column, squeezing the
+ * description to one word per line. Only give it real columns once there is
+ * room for all three.
+ */
 .ec-row {
   position: relative;
   display: grid;
-  grid-template-columns: 3.5rem 1fr;
-  gap: 1.25rem 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .45rem;
   align-items: start;
-  padding: 1.6rem 0;
+  padding: 1.4rem 0;
   border-top: 1px solid rgb(var(--border));
   transition: background-color .3s ease, padding-left .35s cubic-bezier(.22,.61,.36,1);
 }
@@ -518,16 +532,23 @@ header, main, footer { position: relative; z-index: 2; }
 .ec-row:hover { padding-left: .6rem; }
 
 @media (min-width: 768px) {
-  .ec-row { grid-template-columns: 3.5rem 15rem 1fr; align-items: baseline; }
+  .ec-row {
+    grid-template-columns: 4.25rem minmax(0, 15rem) minmax(0, 1fr);
+    gap: 1.25rem 1.5rem;
+    align-items: baseline;
+    padding: 1.6rem 0;
+  }
 }
 
 .ec-row__num {
   font-family: var(--ec-mono);
-  font-size: .76rem;
+  font-size: .72rem;
   font-weight: 600;
   letter-spacing: .1em;
   color: rgb(var(--muted));
-  padding-top: .2rem;
+}
+@media (min-width: 768px) {
+  .ec-row__num { font-size: .76rem; padding-top: .2rem; }
 }
 
 /* ---- Oversized numerals for the module diptych ------------------------- */

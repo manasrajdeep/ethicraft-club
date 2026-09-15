@@ -83,6 +83,29 @@ function collectFaults() {
     }
   }
 
+  // A squeezed text column wraps rather than overflows, so the overflow check
+  // above never sees it. This is the "one word per line" failure: a paragraph
+  // rendered into a narrow gutter while the viewport has plenty of room.
+  for (const el of document.querySelectorAll('p, dd, li, h1, h2, h3')) {
+    const text = el.textContent.trim();
+    if (text.length < 25) continue;
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+    const lines = Math.round(r.height / lineHeight);
+    // Roughly how many characters fit per line at this width.
+    const perLine = r.width / (parseFloat(style.fontSize) * 0.5);
+
+    if (r.width < vw * 0.4 && perLine < 14 && lines > 3) {
+      faults.push({ type: 'squeezed-text',
+        detail: `${describe(el)} is only ${Math.round(r.width)}px wide in a ${vw}px viewport ` +
+                `(~${Math.round(perLine)} chars/line over ${lines} lines): "${text.slice(0, 40)}…"` });
+    }
+  }
+
   // Body copy below 12px is unreadable on a phone.
   for (const el of document.querySelectorAll('p, li, dd, dt, span, a')) {
     if (!el.textContent.trim()) continue;
