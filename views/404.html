@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page not found · EthiCraft Club</title>
+<meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/logo.png" />
+<script>
+  // Runs before first paint: a dark-mode visitor must never see a white flash.
+  // Deliberately inline and synchronous - an external file would load too late.
+  // Resolution order: the visitor's own saved choice, else their OS setting.
+  (() => {
+    try {
+      const saved = localStorage.getItem('ethicraft-theme');
+      const theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // Storage or matchMedia unavailable (Safari private mode): fall back to light.
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Semantic tokens, resolved from CSS custom properties. Because each token is
+  // stored as raw RGB channels, Tailwind's alpha modifiers (bg-surface/70) work.
+  const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+  tailwind.config = {
+    darkMode: ['class', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          bg:        token('bg'),
+          surface:   token('surface'),
+          surface2:  token('surface-2'),
+          deep:      token('deep'),
+          deep2:     token('deep-2'),
+          ink:       token('text'),
+          muted:     token('muted'),
+          ondeep:    token('on-deep'),
+          line:      token('border'),
+          lineStrong:token('border-strong'),
+          sky:     { brand: token('brand-sky'),   dark: token('brand-sky-dk') },
+          magenta: { brand: token('brand-magenta') },
+          amber:   { brand: token('brand-amber'), deep: token('brand-amber-dk') },
+        },
+        fontFamily: {
+          sans:    ['Inter', 'system-ui', 'sans-serif'],
+          display: ['Fraunces', 'Georgia', 'serif'],
+          mono:    ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="grid min-h-screen place-items-center bg-bg px-5 text-center">
+  <div>
+    <img src="/assets/logo.png" alt="" class="mx-auto h-20 w-20" width="80" height="80" />
+    <p class="mt-6 font-display text-6xl font-black text-ink">404</p>
+    <h1 class="mt-3 font-display text-2xl font-bold text-ink">We couldn't find that page</h1>
+    <p class="mt-2 text-sm text-muted">It may have moved, or the link might be out of date.</p>
+    <a href="/" class="mt-7 inline-block rounded-full bg-deep px-6 py-3 text-sm font-bold text-white transition hover:opacity-90">
+      Back to the EthiCraft home page
+    </a>
+  </div>
+</body>
+</html>

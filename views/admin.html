@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard · EthiCraft Club Admin</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/logo.png" />
+<script>
+  // Runs before first paint: a dark-mode visitor must never see a white flash.
+  // Deliberately inline and synchronous - an external file would load too late.
+  // Resolution order: the visitor's own saved choice, else their OS setting.
+  (() => {
+    try {
+      const saved = localStorage.getItem('ethicraft-theme');
+      const theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // Storage or matchMedia unavailable (Safari private mode): fall back to light.
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Semantic tokens, resolved from CSS custom properties. Because each token is
+  // stored as raw RGB channels, Tailwind's alpha modifiers (bg-surface/70) work.
+  const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+  tailwind.config = {
+    darkMode: ['class', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          bg:        token('bg'),
+          surface:   token('surface'),
+          surface2:  token('surface-2'),
+          deep:      token('deep'),
+          deep2:     token('deep-2'),
+          ink:       token('text'),
+          muted:     token('muted'),
+          ondeep:    token('on-deep'),
+          line:      token('border'),
+          lineStrong:token('border-strong'),
+          sky:     { brand: token('brand-sky'),   dark: token('brand-sky-dk') },
+          magenta: { brand: token('brand-magenta') },
+          amber:   { brand: token('brand-amber'), deep: token('brand-amber-dk') },
+        },
+        fontFamily: {
+          sans:    ['Inter', 'system-ui', 'sans-serif'],
+          display: ['Fraunces', 'Georgia', 'serif'],
+          mono:    ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="min-h-screen bg-surface2">
+
+<!-- ============================================================ HEADER -->
+<header class="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5">
+    <div class="flex items-center gap-3">
+      <img src="/assets/logo.png" alt="" class="h-10 w-10" width="40" height="40" />
+      <div class="leading-tight">
+        <p class="font-display text-base font-bold">EthiCraft Admin</p>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-magenta-brand">Event manager</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/" target="_blank" rel="noopener"
+         class="hidden rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surface sm:inline-block">
+        View site ↗
+      </a>
+<button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+        <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button id="logoutBtn" type="button"
+              class="rounded-full bg-deep px-4 py-2 text-sm font-semibold text-white transition hover:bg-deep2">
+        Sign out
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Toast -->
+<div id="toast" class="pointer-events-none fixed inset-x-0 top-20 z-50 flex justify-center px-4"></div>
+
+<main class="mx-auto max-w-6xl px-5 py-10">
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="font-display text-3xl font-bold">Events</h1>
+      <p class="mt-1.5 text-sm text-muted">Create, publish and manage what appears on the public site.</p>
+    </div>
+    <button id="newEventBtn" type="button"
+            class="rounded-full bg-amber-brand px-5 py-2.5 text-sm font-bold text-deep2 shadow-sm transition hover:bg-amber-deep hover:text-white">
+      + New event
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <dl id="stats" class="mt-8 grid gap-4 sm:grid-cols-3">
+    <div class="rounded-2xl bg-surface p-5 shadow-sm ring-1 ring-line">
+      <dt class="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Published</dt>
+      <dd id="statPublished" class="mt-1.5 font-display text-3xl font-black text-ink">–</dd>
+    </div>
+    <div class="rounded-2xl bg-surface p-5 shadow-sm ring-1 ring-line">
+      <dt class="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Drafts</dt>
+      <dd id="statDrafts" class="mt-1.5 font-display text-3xl font-black text-amber-deep">–</dd>
+    </div>
+    <div class="rounded-2xl bg-surface p-5 shadow-sm ring-1 ring-line">
+      <dt class="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Upcoming</dt>
+      <dd id="statUpcoming" class="mt-1.5 font-display text-3xl font-black text-sky-dark">–</dd>
+    </div>
+  </dl>
+
+  <!-- Event list -->
+  <div id="eventList" class="mt-8 space-y-3" aria-live="polite"></div>
+</main>
+
+<!-- =========================================================== DRAWER -->
+<div id="drawer" class="fixed inset-0 z-50 hidden">
+  <div id="drawerBackdrop" class="absolute inset-0 bg-deep2/45 backdrop-blur-sm"></div>
+
+  <div class="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col bg-bg shadow-2xl">
+    <div class="flex items-center justify-between border-b border-line px-6 py-4">
+      <h2 id="drawerTitle" class="font-display text-xl font-bold">New event</h2>
+      <button id="drawerClose" type="button" class="grid h-10 w-10 place-items-center rounded-xl text-ink/50 transition hover:bg-surface hover:text-ink" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="eventForm" class="flex flex-1 flex-col overflow-hidden" novalidate>
+      <input type="hidden" id="eventId" />
+      <input type="hidden" id="removePoster" value="0" />
+
+      <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
+
+        <div id="formError" class="hidden rounded-xl bg-magenta-brand/8 px-4 py-3 text-sm text-magenta-brand ring-1 ring-inset ring-magenta-brand/20" role="alert"></div>
+
+        <div>
+          <label class="block text-sm font-semibold" for="title">Event title <span class="text-magenta-brand">*</span></label>
+          <input id="title" name="title" type="text" required maxlength="160" placeholder="From Then to Now: Alumni Tales"
+                 class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold" for="subtitle">Tagline</label>
+          <input id="subtitle" name="subtitle" type="text" maxlength="240" placeholder="Same Campus. New Perspectives."
+                 class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold" for="description">Description</label>
+          <textarea id="description" name="description" rows="3" maxlength="4000" placeholder="What is this session about?"
+                    class="mt-2 w-full resize-y rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand"></textarea>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label class="block text-sm font-semibold" for="eventDate">Date <span class="text-magenta-brand">*</span></label>
+            <input id="eventDate" name="eventDate" type="date" required
+                   class="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2.5 outline-none transition focus:border-sky-brand" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold" for="startTime">Start</label>
+            <input id="startTime" name="startTime" type="time"
+                   class="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2.5 outline-none transition focus:border-sky-brand" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold" for="endTime">End</label>
+            <input id="endTime" name="endTime" type="time"
+                   class="mt-2 w-full rounded-xl border border-line bg-surface px-3 py-2.5 outline-none transition focus:border-sky-brand" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold" for="mode">Mode</label>
+          <select id="mode" name="mode"
+                  class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand">
+            <option value="Zoom">Zoom (online)</option>
+            <option value="Offline">Offline (on campus)</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+        </div>
+
+        <div id="linkField">
+          <label class="block text-sm font-semibold" for="zoomLink">Zoom / meeting link</label>
+          <input id="zoomLink" name="zoomLink" type="url" placeholder="https://zoom.us/j/1234567890"
+                 class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand" />
+          <p class="mt-1.5 text-xs text-muted">Required before a Zoom event can be published.</p>
+        </div>
+
+        <div id="venueField" class="hidden">
+          <label class="block text-sm font-semibold" for="venue">Venue</label>
+          <input id="venue" name="venue" type="text" maxlength="240" placeholder="Seminar Hall, A Wing, PICT"
+                 class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold" for="topics">Topics</label>
+          <input id="topics" name="topics" type="text" placeholder="Placements, Campus Life, Role of AI in today's World"
+                 class="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-sky-brand" />
+          <p class="mt-1.5 text-xs text-muted">Separate each topic with a comma.</p>
+        </div>
+
+        <!-- Poster -->
+        <div>
+          <span class="block text-sm font-semibold">Event poster</span>
+          <label id="dropzone" for="poster"
+                 class="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-line bg-surface px-6 py-8 text-center transition hover:border-sky-brand hover:bg-sky-brand/5">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-ink/40"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span class="mt-2.5 text-sm font-semibold text-ink">Click to upload, or drag an image here</span>
+            <span class="mt-1 text-xs text-muted">JPG, PNG, WebP or GIF · up to 6 MB</span>
+          </label>
+          <input id="poster" name="poster" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="sr-only" />
+
+          <div id="posterPreview" class="mt-3 hidden items-start gap-3 rounded-xl bg-surface p-3 ring-1 ring-line">
+            <img id="posterImg" src="" alt="" class="h-24 w-16 rounded-lg object-cover" />
+            <div class="min-w-0 flex-1">
+              <p id="posterName" class="truncate text-sm font-semibold"></p>
+              <p id="posterMeta" class="mt-0.5 text-xs text-muted"></p>
+              <button type="button" id="posterRemove" class="mt-2 text-xs font-bold text-magenta-brand hover:underline">Remove poster</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex cursor-pointer items-start gap-3 rounded-xl bg-surface p-4 ring-1 ring-line">
+          <input id="published" name="published" type="checkbox" class="mt-0.5 h-4 w-4 accent-sky-dark" />
+          <span>
+            <span class="block text-sm font-semibold">Publish to the public site</span>
+            <span class="mt-0.5 block text-xs text-muted">Leave unchecked to save it as a draft only the club team can see.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 border-t border-line bg-surface px-6 py-4">
+        <button type="button" id="cancelBtn" class="rounded-xl px-5 py-2.5 text-sm font-semibold text-ink/60 transition hover:text-ink">Cancel</button>
+        <button type="submit" id="saveBtn" class="rounded-xl bg-deep px-6 py-2.5 text-sm font-bold text-white transition hover:bg-sky-dark disabled:opacity-60">Save event</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====================================================== CONFIRM MODAL -->
+<div id="confirm" class="fixed inset-0 z-[60] hidden items-center justify-center bg-deep2/50 p-5 backdrop-blur-sm">
+  <div class="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-2xl">
+    <h3 id="confirmTitle" class="font-display text-lg font-bold">Delete this event?</h3>
+    <p id="confirmBody" class="mt-2 text-sm text-muted">This removes the event and its poster permanently.</p>
+    <div class="mt-6 flex justify-end gap-3">
+      <button type="button" id="confirmCancel" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-ink/60 hover:text-ink">Cancel</button>
+      <button type="button" id="confirmOk" class="rounded-xl bg-magenta-brand px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/theme.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

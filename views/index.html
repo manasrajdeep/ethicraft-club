@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>EthiCraft Club PICT | Life Skills &amp; Character Building Club in Pune</title>
+<meta name="description" content="The EthiCraft Club at Pune Institute of Computer Technology (PICT), Pune — building life skills, character and balance through the VIBE and IMPACT modules: wisdom sessions with IIT and industry mentors, bootcamps, mentorship, IIT workshops and social welfare." />
+<link rel="canonical" href="https://ethicraft.in/" />
+<meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/logo.png" />
+<link rel="apple-touch-icon" href="/assets/logo.png" />
+
+<meta name="keywords" content="EthiCraft Club, EthiCraft PICT, PICT Pune, PICT clubs, student club Pune, life skills club Pune, personality development PICT, wisdom sessions, VIBE module, IMPACT module, Pune Institute of Computer Technology" />
+<meta name="author" content="The EthiCraft Club, PICT" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+<meta name="geo.region" content="IN-MH" />
+<meta name="geo.placename" content="Pune, Maharashtra" />
+<meta name="geo.position" content="18.457551;73.850691" />
+<meta name="ICBM" content="18.457551, 73.850691" />
+
+<meta property="og:site_name" content="EthiCraft Club PICT" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_IN" />
+<meta property="og:url" content="https://ethicraft.in/" />
+<meta property="og:title" content="EthiCraft Club PICT | Learn. Connect. Grow." />
+<meta property="og:description" content="Life skills, character and balance for PICTians — wisdom sessions, bootcamps, mentorship, IIT workshops and social welfare." />
+<meta property="og:image" content="https://ethicraft.in/assets/logo.png" />
+<meta property="og:image:alt" content="The EthiCraft Club logo" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="EthiCraft Club PICT | Learn. Connect. Grow." />
+<meta name="twitter:description" content="Life skills, character and balance for PICTians, at Pune Institute of Computer Technology." />
+<meta name="twitter:image" content="https://ethicraft.in/assets/logo.png" />
+
+<script>
+  // Runs before first paint: a dark-mode visitor must never see a white flash.
+  // Deliberately inline and synchronous - an external file would load too late.
+  // Resolution order: the visitor's own saved choice, else their OS setting.
+  (() => {
+    try {
+      const saved = localStorage.getItem('ethicraft-theme');
+      const theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // Storage or matchMedia unavailable (Safari private mode): fall back to light.
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Semantic tokens, resolved from CSS custom properties. Because each token is
+  // stored as raw RGB channels, Tailwind's alpha modifiers (bg-surface/70) work.
+  const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+  tailwind.config = {
+    darkMode: ['class', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          bg:        token('bg'),
+          surface:   token('surface'),
+          surface2:  token('surface-2'),
+          deep:      token('deep'),
+          deep2:     token('deep-2'),
+          ink:       token('text'),
+          muted:     token('muted'),
+          ondeep:    token('on-deep'),
+          line:      token('border'),
+          lineStrong:token('border-strong'),
+          sky:     { brand: token('brand-sky'),   dark: token('brand-sky-dk') },
+          magenta: { brand: token('brand-magenta') },
+          amber:   { brand: token('brand-amber'), deep: token('brand-amber-dk') },
+        },
+        fontFamily: {
+          sans:    ['Inter', 'system-ui', 'sans-serif'],
+          display: ['Fraunces', 'Georgia', 'serif'],
+          mono:    ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "EducationalOrganization",
+      "@id": "https://ethicraft.in/#organization",
+      "name": "The EthiCraft Club, PICT",
+      "alternateName": ["EthiCraft PICT", "EthiCraft Club"],
+      "url": "https://ethicraft.in/",
+      "logo": "https://ethicraft.in/assets/logo.png",
+      "image": "https://ethicraft.in/assets/logo.png",
+      "email": "ethicraft.pict25@gmail.com",
+      "telephone": "+91-9860915506",
+      "slogan": "Learn. Connect. Grow.",
+      "description": "A student club at Pune Institute of Computer Technology developing life skills, character and life balance through the VIBE and IMPACT modules.",
+      "foundingLocation": { "@type": "Place", "name": "Pune, Maharashtra, India" },
+      "parentOrganization": { "@type": "Organization", "name": "EthiCraft PAN India" },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Survey No. 27, Near Trimurti Chowk, Dhankawadi",
+        "addressLocality": "Pune",
+        "addressRegion": "Maharashtra",
+        "postalCode": "411043",
+        "addressCountry": "IN"
+      },
+      "geo": { "@type": "GeoCoordinates", "latitude": 18.457551, "longitude": 73.850691 },
+      "areaServed": { "@type": "City", "name": "Pune" },
+      "contactPoint": [{
+        "@type": "ContactPoint",
+        "contactType": "membership enquiries",
+        "email": "ethicraft.pict25@gmail.com",
+        "telephone": "+91-9860915506",
+        "areaServed": "IN",
+        "availableLanguage": ["en", "hi", "mr"]
+      }]
+    },
+    {
+      "@type": "CollegeOrUniversity",
+      "@id": "https://ethicraft.in/#pict",
+      "name": "Pune Institute of Computer Technology",
+      "alternateName": "PICT",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Pune",
+        "addressRegion": "Maharashtra",
+        "addressCountry": "IN"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://ethicraft.in/#website",
+      "url": "https://ethicraft.in/",
+      "name": "EthiCraft Club PICT",
+      "inLanguage": "en-IN",
+      "publisher": { "@id": "https://ethicraft.in/#organization" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://ethicraft.in/#webpage",
+      "url": "https://ethicraft.in/",
+      "name": "EthiCraft Club PICT | Life Skills & Character Building Club in Pune",
+      "isPartOf": { "@id": "https://ethicraft.in/#website" },
+      "about": { "@id": "https://ethicraft.in/#organization" },
+      "breadcrumb": { "@id": "https://ethicraft.in/#breadcrumb" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://ethicraft.in/#breadcrumb",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ethicraft.in/" },
+        { "@type": "ListItem", "position": 2, "name": "Programs", "item": "https://ethicraft.in/#modules" },
+        { "@type": "ListItem", "position": 3, "name": "Events", "item": "https://ethicraft.in/#events" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://ethicraft.in/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the EthiCraft Club at PICT?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "EthiCraft is a student club at Pune Institute of Computer Technology (PICT), Pune. It develops life skills, builds character and promotes life balance through wisdom sessions, bootcamps, mentorship circles, IIT workshops and social welfare activities."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the VIBE and IMPACT modules?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VIBE is the core module open to all members, covering Insight (wisdom sessions), Upskill (online bootcamps), Escape (outings and festivals) and Guide (mentorship circles). IMPACT is the advanced module, adding physical IIT workshops, CCA-credited social welfare work and expanded VIBE access."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I join the EthiCraft Club at PICT?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Email ethicraft.pict25@gmail.com or call 98609 15506 to join. Entry to the IMPACT module additionally requires 75% attendance across sessions, discipline and active class participation."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+
+<body class="antialiased no-js">
+<script>
+  // Removed immediately when scripting is available; the `no-js` class keeps
+  // scroll-reveal content visible for anyone browsing without JavaScript.
+  document.body.classList.remove('no-js');
+</script>
+
+<!-- Drawn icon set. Geometry echoes the logo: open arcs, raised forms and
+     loose dots. Referenced with <use href="#i-name"> so each glyph ships once. -->
+<svg width="0" height="0" class="absolute" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <symbol id="i-speak" viewBox="0 0 24 24">
+      <path d="M4 5.5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8.5L5 18v-3.5H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2Z"/>
+      <circle class="dot" cx="19" cy="6" r="1.6"/><circle class="dot" cx="22" cy="10" r="1"/>
+    </symbol>
+    <symbol id="i-rise" viewBox="0 0 24 24">
+      <path d="M3 18c3.5 0 5-3.2 6.5-6.6C11 8 12.7 4.5 16 4.5"/>
+      <path d="M13 4.5h3.5V8"/><circle class="dot" cx="20" cy="15" r="1.8"/><circle class="dot" cx="21.5" cy="20" r="1"/>
+    </symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6"/><path d="m15.2 8.8-2 4.4-4.4 2 2-4.4 4.4-2Z"/>
+      <circle class="dot" cx="12" cy="12" r="1"/>
+    </symbol>
+    <symbol id="i-balance" viewBox="0 0 24 24">
+      <path d="M12 4.2v15.6M6.5 19.8h11M4 8.4h16"/>
+      <path d="M4 8.4 1.6 14a2.6 2.6 0 0 0 4.8 0L4 8.4ZM20 8.4 17.6 14a2.6 2.6 0 0 0 4.8 0L20 8.4Z"/>
+      <circle class="dot" cx="12" cy="5.6" r="1.4"/>
+    </symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24">
+      <path d="M12 21v-8.4"/>
+      <path d="M12 12.6C12 9 9.4 6.2 5.6 6.2c0 3.6 2.6 6.4 6.4 6.4Z"/>
+      <path d="M12 12.6c0-3.2 2.3-5.8 5.8-5.8 0 3.2-2.4 5.8-5.8 5.8Z"/>
+      <circle class="dot" cx="12" cy="3.4" r="1.4"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.6"/>
+      <circle class="dot" cx="12" cy="12" r="1.7"/>
+    </symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.8"/><path d="M3.2 12h17.6"/>
+      <path d="M12 3.2c2.4 2.5 3.7 5.6 3.7 8.8S14.4 18.3 12 20.8c-2.4-2.5-3.7-5.6-3.7-8.8S9.6 5.7 12 3.2Z"/>
+    </symbol>
+    <symbol id="i-peaks" viewBox="0 0 24 24">
+      <path d="M2 19h20"/><path d="m4.5 19 5-8.6 3.2 5.2"/><path d="m11 19 4.6-7.4L21 19"/>
+      <circle class="dot" cx="18.4" cy="5.2" r="1.8"/>
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24">
+      <path d="M3.2 5.2h6a3 3 0 0 1 3 3v11a2.4 2.4 0 0 0-2.4-2.4H3.2Z"/>
+      <path d="M20.8 5.2h-6a3 3 0 0 0-3 3v11a2.4 2.4 0 0 1 2.4-2.4h6.6Z"/>
+      <circle class="dot" cx="12" cy="2.6" r="1.3"/>
+    </symbol>
+    <symbol id="i-chevrons" viewBox="0 0 24 24">
+      <path d="m5 15.5 4-4 4 4M5 20l4-4 4 4"/><path d="M17 12.5V4m0 0-3 3m3-3 3 3"/>
+    </symbol>
+    <symbol id="i-tent" viewBox="0 0 24 24">
+      <path d="M2.5 20h19"/><path d="m12 4-9.5 16M12 4l9.5 16"/><path d="m12 11-5 9M12 11l5 9"/>
+      <circle class="dot" cx="20" cy="6" r="1.5"/>
+    </symbol>
+    <symbol id="i-hands" viewBox="0 0 24 24">
+      <path d="M3 20c0-3.4 2.4-6 5.6-6"/><path d="M21 20c0-3.4-2.4-6-5.6-6"/>
+      <path d="M12 16.5c-2.2-2-4-3.6-4-5.6A2.6 2.6 0 0 1 12 9a2.6 2.6 0 0 1 4 1.9c0 2-1.8 3.6-4 5.6Z"/>
+      <circle class="dot" cx="6" cy="5.5" r="1.5"/><circle class="dot" cx="18" cy="5.5" r="1.5"/>
+    </symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24">
+      <path d="M2.5 20h19M4 20V9m5 11V9m6 11V9m5 11V9"/>
+      <path d="M2.5 9 12 3.6 21.5 9Z"/>
+    </symbol>
+    <symbol id="i-loop" viewBox="0 0 24 24">
+      <path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9"/><path d="M3.5 12a8.5 8.5 0 0 1 14.6-5.9"/>
+      <path d="M3.5 7.4v4.8h4.8M20.5 16.6v-4.8h-4.8"/>
+    </symbol>
+  </defs>
+</svg>
+
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:m-3 focus:rounded-lg focus:bg-deep focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
+
+<div id="scrollProgress" class="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0"
+     style="background:linear-gradient(90deg,rgb(var(--brand-amber)),rgb(var(--brand-magenta)) 50%,rgb(var(--brand-sky)))"
+     aria-hidden="true"></div>
+
+<!-- ======================================================= NAVIGATION -->
+<header id="nav" class="ec-nav fixed inset-x-0 top-0 z-50">
+  <nav class="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-3.5 lg:px-10" aria-label="Main">
+    <a href="#top" class="flex items-center gap-3">
+      <img src="/assets/logo.png" alt="" class="h-11 w-11 shrink-0" width="44" height="44" />
+      <span class="leading-none">
+        <span class="ec-nav-ink block font-display text-[1.35rem] font-bold tracking-tight text-ink">EthiCraft</span>
+        <span class="ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
+      </span>
+    </a>
+
+    <div class="hidden items-center gap-8 text-sm font-semibold text-ink/75 lg:flex">
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="#about">Charter</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="#modules">Modules</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="#events">Events</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="#speakers">Mentors</a>
+      <a href="#join" class="rounded-full bg-deep px-5 py-2.5 text-ondeep shadow-sm transition hover:opacity-90">Join the club</a>
+      <button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+        <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 lg:hidden">
+      <button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+        <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button id="navToggle" type="button" class="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface/70 text-ink"
+              aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+        <svg id="navIconOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <svg id="navIconClose" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="mobileMenu" class="hidden border-t border-line bg-bg/95 px-5 py-4 backdrop-blur lg:hidden">
+    <div class="flex flex-col gap-1 text-sm font-semibold text-ink">
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="#about">Charter</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="#modules">Modules</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="#events">Events</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="#speakers">Mentors</a>
+      <a class="mt-1 rounded-lg bg-deep px-3 py-2.5 text-center text-ondeep" href="#join">Join the club</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============================================================= HERO -->
+<section id="top" class="ec-hero-photo relative isolate overflow-hidden pt-28 pb-0 sm:pt-36"
+         style="--hero-src: url('/assets/hero-bg.jpg')">
+  <div class="ec-mesh" aria-hidden="true"></div>
+  <div class="ec-blob h-64 w-64 bg-sky-brand" style="top:-4rem; right:-3rem;"></div>
+  <div class="ec-blob h-72 w-72 bg-magenta-brand" style="bottom:2rem; left:-5rem; animation-delay:-5s;"></div>
+
+  <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="grid gap-12 lg:grid-cols-[1.35fr_auto_0.95fr] lg:gap-10">
+
+      <!-- Editorial masthead. Asymmetric on purpose: the type block runs wide
+           and the card hangs off the right rail rather than sitting in a
+           mirrored two-column split. -->
+      <div class="pb-16 lg:pb-28">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-ondeep/55">
+          <span class="ec-label flex items-center gap-2 text-amber-brand">
+            <span class="ec-status text-amber-brand"></span> EST. AT PICT, PUNE
+          </span>
+          <span class="ec-label hidden sm:inline text-white/25">/</span>
+          <span class="ec-label hidden sm:inline text-white/45">CHAPTER OF ETHICRAFT PAN INDIA</span>
+        </div>
+
+        <h1 class="mt-7 font-display font-black tracking-[-0.035em] text-white"
+            style="font-size:clamp(3rem,8.5vw,6.5rem); line-height:.92">
+          Learn.<br />
+          <span class="ec-gradient-text">Connect.</span><br />
+          Grow.
+        </h1>
+
+        <div class="mt-9 max-w-xl border-l-2 border-amber-brand/70 pl-5">
+          <p class="text-lg leading-relaxed text-ondeep/80">
+            A syllabus teaches you to build systems. We spend the other hours on the harder
+            build — <strong class="font-semibold text-white">life skills, character and balance</strong>
+            — with mentors from IITs, IISc and industry who have already walked it.
+          </p>
+        </div>
+
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <a href="#events" class="rounded-full bg-amber-brand px-7 py-3.5 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
+            See upcoming events
+          </a>
+          <a href="#modules" class="rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20">
+            VIBE &amp; IMPACT
+          </a>
+        </div>
+
+        <div class="mt-14 max-w-lg">
+          <div class="ec-ticks text-white"></div>
+          <dl class="grid grid-cols-3 gap-6 pt-5">
+            <div>
+              <dt class="ec-label text-ondeep/45">Modules</dt>
+              <dd class="ec-digit mt-1.5 text-3xl font-bold text-white">02</dd>
+            </div>
+            <div>
+              <dt class="ec-label text-ondeep/45">Mentors</dt>
+              <dd class="ec-digit mt-1.5 text-3xl font-bold text-white">IIT<span class="text-base font-normal text-ondeep/55">/IND</span></dd>
+            </div>
+            <div>
+              <dt class="ec-label text-ondeep/45">Reach</dt>
+              <dd class="ec-digit mt-1.5 text-3xl font-bold text-white">PAN<span class="text-base font-normal text-ondeep/55">/IN</span></dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Vertical rail: a printed-programme device, not a web one. -->
+      <div class="hidden items-center justify-center lg:flex">
+        <div class="flex h-full flex-col items-center gap-5">
+          <span class="h-full w-px bg-gradient-to-b from-transparent via-white/25 to-transparent"></span>
+          <span class="ec-rail whitespace-nowrap text-white/35">People · Experiences · Possibilities</span>
+          <span class="h-full w-px bg-gradient-to-b from-transparent via-white/25 to-transparent"></span>
+        </div>
+      </div>
+
+      <aside id="heroEvent" class="pb-16 lg:self-center lg:pb-28" aria-live="polite"></aside>
+    </div>
+  </div>
+
+  <!-- Running ticker seams the hero into the page. -->
+  <div class="relative border-y border-white/12 bg-black/25 py-3 backdrop-blur-sm">
+    <div class="ec-marquee">
+      <div class="ec-marquee__track" aria-hidden="true">
+        <span class="ec-label text-white/50">WISDOM SESSIONS</span><span class="text-amber-brand">◆</span>
+        <span class="ec-label text-white/50">ONLINE BOOTCAMPS</span><span class="text-magenta-brand">◆</span>
+        <span class="ec-label text-white/50">MENTORSHIP CIRCLES</span><span class="text-sky-brand">◆</span>
+        <span class="ec-label text-white/50">IIT WORKSHOPS</span><span class="text-amber-brand">◆</span>
+        <span class="ec-label text-white/50">SOCIAL WELFARE</span><span class="text-magenta-brand">◆</span>
+        <span class="ec-label text-white/50">OUTINGS &amp; FESTIVALS</span><span class="text-sky-brand">◆</span>
+        <span class="ec-label text-white/50">ONCE A PICTIAN, ALWAYS A PICTIAN</span><span class="text-amber-brand">◆</span>
+      </div>
+      <div class="ec-marquee__track" aria-hidden="true">
+        <span class="ec-label text-white/50">WISDOM SESSIONS</span><span class="text-amber-brand">◆</span>
+        <span class="ec-label text-white/50">ONLINE BOOTCAMPS</span><span class="text-magenta-brand">◆</span>
+        <span class="ec-label text-white/50">MENTORSHIP CIRCLES</span><span class="text-sky-brand">◆</span>
+        <span class="ec-label text-white/50">IIT WORKSHOPS</span><span class="text-amber-brand">◆</span>
+        <span class="ec-label text-white/50">SOCIAL WELFARE</span><span class="text-magenta-brand">◆</span>
+        <span class="ec-label text-white/50">OUTINGS &amp; FESTIVALS</span><span class="text-sky-brand">◆</span>
+        <span class="ec-label text-white/50">ONCE A PICTIAN, ALWAYS A PICTIAN</span><span class="text-amber-brand">◆</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CHARTER -->
+<!-- Deliberately NOT a grid of identical cards: this is an index, the way a
+     printed programme lists its articles. Numbered, hairline-ruled, scannable. -->
+<section id="about" class="relative bg-bg py-24 sm:py-32">
+  <div class="ec-grid-bg pointer-events-none absolute inset-0" aria-hidden="true"></div>
+
+  <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="grid gap-10 lg:grid-cols-[22rem_1fr] lg:gap-20">
+
+      <div class="ec-reveal lg:sticky lg:top-28 lg:self-start">
+        <p class="ec-index text-ink/45">01 <span class="text-ink/70">Charter</span></p>
+        <div class="ec-rule mt-4 w-16"></div>
+        <h2 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
+          Eight things<br />we are trying<br />to build in you.
+        </h2>
+        <p class="mt-6 max-w-sm leading-relaxed text-muted">
+          Our charter, in plain language. Every session, outing and workshop traces back
+          to one of these eight lines.
+        </p>
+        <p class="ec-label mt-8 text-ink/35">PICT · DHANKAWADI · PUNE 411043</p>
+      </div>
+
+      <ol class="ec-reveal">
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.01</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-sky-dark" aria-hidden="true"><use href="#i-speak"/></svg>
+            Develop life skills
+          </h3>
+          <p class="leading-relaxed text-muted">Build the soft skills a degree never examines, through timeless wisdom.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.02</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-magenta-brand" aria-hidden="true"><use href="#i-rise"/></svg>
+            Unlock individual potential
+          </h3>
+          <p class="leading-relaxed text-muted">Sharpen concentration, motivation and self-confidence until they hold under pressure.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.03</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-amber-deep" aria-hidden="true"><use href="#i-compass"/></svg>
+            Build character &amp; competence
+          </h3>
+          <p class="leading-relaxed text-muted">Competence opens the door. Character decides how long you stay in the room.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.04</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-sky-dark" aria-hidden="true"><use href="#i-balance"/></svg>
+            Promote life balance
+          </h3>
+          <p class="leading-relaxed text-muted">Hold personal, professional and entertainment priorities in proportion.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.05</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-magenta-brand" aria-hidden="true"><use href="#i-sprout"/></svg>
+            Encourage healthy living
+          </h3>
+          <p class="leading-relaxed text-muted">Stay clear of the habits and addictions that quietly cost people their twenties.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.06</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-amber-deep" aria-hidden="true"><use href="#i-eye"/></svg>
+            Cultivate self-awareness
+          </h3>
+          <p class="leading-relaxed text-muted">Develop sensitivity and self-awareness in ordinary, everyday situations.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.07</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-sky-dark" aria-hidden="true"><use href="#i-globe"/></svg>
+            Broaden perspectives
+          </h3>
+          <p class="leading-relaxed text-muted">Sit with international faculty and find out how much larger the world is.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">OBJ.08</span>
+          <h3 class="flex items-center gap-3 font-display text-xl font-bold">
+            <svg class="ec-icon text-magenta-brand" aria-hidden="true"><use href="#i-peaks"/></svg>
+            Experience nature
+          </h3>
+          <p class="leading-relaxed text-muted">Get out of Pune, up a hill, and remember what quiet sounds like.</p>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ MODULES -->
+<section id="modules" class="relative overflow-hidden bg-deep py-24 text-white sm:py-32">
+  <div class="ec-grid-bg-dark pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div class="ec-blob h-80 w-80 bg-sky-brand" style="top:10%; right:-6rem; opacity:.25;"></div>
+
+  <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="ec-reveal max-w-3xl">
+      <p class="ec-index text-ondeep/40">02 <span class="text-ondeep/70">Programs</span></p>
+      <div class="ec-rule mt-4 w-16"></div>
+      <h2 class="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">Two modules, one arc</h2>
+      <p class="mt-5 text-lg leading-relaxed text-ondeep/70">
+        <strong class="font-semibold text-white">VIBE</strong> is where every member starts.
+        <strong class="font-semibold text-white">IMPACT</strong> is what you earn by showing up.
+      </p>
+    </div>
+
+    <div class="mt-16 grid gap-6 lg:grid-cols-2">
+
+      <article class="ec-bracket ec-reveal relative overflow-hidden rounded-3xl bg-white/[0.06] p-8 text-white ring-1 ring-inset ring-white/10 backdrop-blur sm:p-10">
+        <span class="ec-bignum absolute -right-3 -top-5 select-none" aria-hidden="true">01</span>
+        <div class="relative">
+          <span class="ec-label text-sky-brand">MOD.01 // CORE</span>
+          <h3 class="mt-2 font-display text-4xl font-black tracking-tight">VIBE</h3>
+          <p class="mt-3 text-ondeep/65">Open to every member, from day one.</p>
+
+          <dl class="mt-9 space-y-6">
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-book"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">Insight <span class="ec-label text-white/30">VIBE.01</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Wisdom sessions with leaders from IITs, IISc and global industry.</dd>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-chevrons"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">Upskill <span class="ec-label text-white/30">VIBE.02</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Online bootcamps for tech and professional skills, plus enigmatic activities.</dd>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-tent"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">Escape <span class="ec-label text-white/30">VIBE.03</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Outings and festivals that build community and cultural appreciation.</dd>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-compass"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">Guide <span class="ec-label text-white/30">VIBE.04</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Mentorship circles for academics, coding and personal development.</dd>
+              </div>
+            </div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="ec-bracket ec-reveal relative overflow-hidden rounded-3xl bg-white/[0.06] p-8 text-white ring-1 ring-inset ring-white/10 backdrop-blur sm:p-10">
+        <span class="ec-bignum absolute -right-3 -top-5 select-none" aria-hidden="true">02</span>
+        <div class="relative">
+          <span class="ec-label text-amber-brand">MOD.02 // ADVANCED</span>
+          <h3 class="mt-2 font-display text-4xl font-black tracking-tight">IMPACT</h3>
+          <p class="mt-3 text-ondeep/65">Earned through participation, not sign-up.</p>
+
+          <dl class="mt-9 space-y-6">
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-columns"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">Immersion <span class="ec-label text-white/30">IMP.01</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Physical workshops on IIT campuses — hands-on, in the room, for real.</dd>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-hands"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">CCA credits <span class="ec-label text-white/30">IMP.02</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Social welfare work — tree plantation, food distribution and teaching.</dd>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-loop"/></svg>
+              <div>
+                <dt class="flex items-baseline gap-2 font-semibold">VIBE 2.0 <span class="ec-label text-white/30">IMP.03</span></dt>
+                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Everything VIBE offers, with expanded access and deeper engagement.</dd>
+              </div>
+            </div>
+          </dl>
+
+          <div class="mt-9 rounded-2xl bg-deep2/60 p-5 ring-1 ring-inset ring-white/10">
+            <p class="ec-label text-amber-brand">ENTRY CRITERIA // ALL REQUIRED</p>
+            <ul class="mt-3 grid gap-2 text-sm text-ondeep/75 sm:grid-cols-3">
+              <li class="flex items-center gap-2"><span class="ec-digit font-bold text-amber-brand">01</span> 75% attendance</li>
+              <li class="flex items-center gap-2"><span class="ec-digit font-bold text-amber-brand">02</span> Discipline</li>
+              <li class="flex items-center gap-2"><span class="ec-digit font-bold text-amber-brand">03</span> Class participation</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= EVENTS -->
+<section id="events" class="bg-surface2 py-24 sm:py-32">
+  <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="ec-reveal flex flex-wrap items-end justify-between gap-6">
+      <div class="max-w-2xl">
+        <p class="ec-index text-ink/45">03 <span class="text-ink/70">Schedule</span></p>
+        <div class="ec-rule mt-4 w-16"></div>
+        <h2 class="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">What's on next</h2>
+        <p class="mt-5 text-lg leading-relaxed text-muted">
+          Sessions, bootcamps and outings — published live by the club team.
+        </p>
+      </div>
+      <div class="flex gap-2 rounded-full bg-surface p-1 font-mono shadow-sm ring-1 ring-line" role="tablist" aria-label="Filter events">
+        <button type="button" data-scope="upcoming" role="tab" aria-selected="true" class="ec-tab rounded-full px-5 py-2 text-sm font-semibold transition">Upcoming</button>
+        <button type="button" data-scope="past" role="tab" aria-selected="false" class="ec-tab rounded-full px-5 py-2 text-sm font-semibold transition">Past</button>
+      </div>
+    </div>
+
+    <div id="eventsMeta" class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-line py-3"></div>
+    <div id="eventsGrid" class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-live="polite" aria-busy="true"></div>
+  </div>
+</section>
+
+<!-- ============================================================ MENTORS -->
+<section id="speakers" class="bg-bg py-24 sm:py-32">
+  <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="ec-reveal grid gap-8 lg:grid-cols-[22rem_1fr] lg:gap-20">
+      <div>
+        <p class="ec-index text-ink/45">04 <span class="text-ink/70">Mentors</span></p>
+        <div class="ec-rule mt-4 w-16"></div>
+        <h2 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
+          The people<br />who show up<br />for us.
+        </h2>
+        <p class="mt-6 max-w-sm leading-relaxed text-muted">
+          A sample of the mentors who have led EthiCraft wisdom sessions — from IIT Kharagpur
+          and IISc to Google, TCS, VMware and Persistent.
+        </p>
+      </div>
+
+      <ol class="ec-reveal">
+        <li class="ec-row">
+          <span class="ec-row__num">M.01</span>
+          <div><h3 class="font-display text-lg font-bold">Dr. Hari Krishna Padavala</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">CHAIRMAN · ETHICRAFT PAN INDIA</p></div>
+          <p class="text-muted">Associate Professor, NIT Warangal.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.02</span>
+          <div><h3 class="font-display text-lg font-bold">Dr. Amber Sayal</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">PH.D. IIFT</p></div>
+          <p class="text-muted">Client Partner, Tata Consultancy Services.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.03</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. Niranjan Pendharkar</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">ME IISC · BE VNIT</p></div>
+          <p class="text-muted">Google.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.04</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. Amarjit Gupta</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">CSE · IIT KHARAGPUR</p></div>
+          <p class="text-muted">Lead Design Engineer, Cadence Design Systems.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.05</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. Shantanu Velankar</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">SENIOR MANAGER, R&amp;D</p></div>
+          <p class="text-muted">VMware.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.06</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. Aman Jain</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">IIT KHARAGPUR</p></div>
+          <p class="text-muted">Senior Staff Engineer, Seagate Technology.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.07</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. Amal M Das</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">NIT ROURKELA</p></div>
+          <p class="text-muted">CEO, ARJUNA Group Trust.</p>
+        </li>
+        <li class="ec-row">
+          <span class="ec-row__num">M.08</span>
+          <div><h3 class="font-display text-lg font-bold">Mr. K S Subramanyam</h3>
+            <p class="ec-label mt-1.5 text-magenta-brand">PMP · CSQA · CBAP</p></div>
+          <p class="text-muted">General Manager, Persistent Systems.</p>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== JOIN -->
+<section id="join" class="relative overflow-hidden bg-deep2 py-24 text-white sm:py-32">
+  <div class="ec-blob h-72 w-72 bg-amber-brand" style="top:-4rem; left:20%; opacity:.28;"></div>
+  <div class="ec-blob h-72 w-72 bg-magenta-brand" style="bottom:-5rem; right:10%; opacity:.28; animation-delay:-7s;"></div>
+
+  <div class="relative mx-auto max-w-3xl px-5 text-center lg:px-10">
+    <img src="/assets/logo.png" alt="" class="ec-reveal mx-auto h-20 w-20" width="80" height="80" />
+    <p class="ec-reveal ec-label mt-6 text-amber-brand">MEMBERSHIP OPEN</p>
+    <h2 class="ec-reveal mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">Want to join EthiCraft?</h2>
+    <p class="ec-reveal mt-5 text-lg leading-relaxed text-ondeep/75">
+      Together, we build a creative community where ideas grow, skills thrive and culture comes to life.
+      We can't wait to create with you — let's craft a brighter future, together.
+    </p>
+
+    <div class="ec-reveal mt-10 flex flex-wrap justify-center gap-3">
+      <a href="mailto:ethicraft.pict25@gmail.com?subject=I%27d%20like%20to%20join%20EthiCraft%20PICT"
+         class="rounded-full bg-amber-brand px-7 py-3.5 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
+        Email us to join
+      </a>
+      <a href="tel:+919860915506"
+         class="rounded-full border border-white/25 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20">
+        Call 98609 15506
+      </a>
+    </div>
+
+    <p class="ec-reveal ec-label mt-8 text-ondeep/45">
+      ETHICRAFT.PICT25@GMAIL.COM · 98609 15506 / 70209 85163
+    </p>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================= FOOTER -->
+<footer class="border-t border-white/10 bg-deep py-12 text-ondeep/60">
+  <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+      <div class="flex items-center gap-3">
+        <img src="/assets/logo.png" alt="" class="h-9 w-9" width="36" height="36" />
+        <span class="text-sm">The EthiCraft Club · Pune Institute of Computer Technology, Pune</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm">
+        <a class="ec-taplink transition hover:text-ondeep" href="#about">Charter</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="#modules">Modules</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="#events">Events</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="mailto:ethicraft.pict25@gmail.com">Contact</a>
+      </div>
+    </div>
+
+    <div class="ec-ticks mt-9 text-white"></div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <span class="ec-label text-ondeep/30">LEARN · CONNECT · GROW</span>
+      <span class="ec-label text-ondeep/30">DHANKAWADI, PUNE 411043</span>
+      <span id="buildMeta" class="ec-label text-ondeep/30"></span>
+    </div>
+  </div>
+</footer>
+
+<!-- Poster lightbox -->
+<div id="lightbox" class="fixed inset-0 z-[80] hidden items-center justify-center bg-deep2/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Event poster">
+  <button id="lightboxClose" type="button" class="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/25 transition hover:bg-white/20" aria-label="Close poster">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <img id="lightboxImg" src="" alt="" class="max-h-[88vh] max-w-full rounded-xl shadow-2xl" />
+</div>
+
+<script src="/js/theme.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Caddy handles TLS certificates for ethicraft.in automatically — no certbot,
+# no renewal cron. Install to /etc/caddy/Caddyfile, then:
+#   sudo systemctl reload caddy
+
+ethicraft.in, www.ethicraft.in {
+	encode zstd gzip
+
+	# Redirect the www host to the apex so Google indexes one canonical origin.
+	@www host www.ethicraft.in
+	redir @www https://ethicraft.in{uri} permanent
+
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options    "nosniff"
+		Referrer-Policy           "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/ethicraft.log {
+			roll_size 10mb
+			roll_keep 10
+		}
+	}
+}

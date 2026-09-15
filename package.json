@@ -1,0 +1,35 @@
+{
+  "name": "ethicraft-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website + admin portal for the EthiCraft Club, PICT",
+  "type": "commonjs",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "seed": "node scripts/seed.js",
+    "reset-db": "node scripts/reset-db.js",
+    "test": "node --test test/*.test.js",
+    "test:watch": "node --test --watch test/*.test.js",
+    "test:responsive": "node test/responsive-audit.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.3.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.11.0"
+  }
+}

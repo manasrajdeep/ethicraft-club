@@ -1,0 +1,26 @@
+# Render Blueprint. With this file in the repo, Render can configure the whole
+# service automatically — you point it at the repo and it reads this.
+services:
+  - type: web
+    name: ethicraft
+    runtime: node
+    plan: free
+    region: singapore          # closest Render region to Pune
+    buildCommand: npm ci
+    startCommand: node server/index.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SITE_ORIGIN
+        value: https://ethicraft.in
+      - key: ADMIN_PATH
+        value: /adminkrsna
+      - key: ADMIN_USERNAME
+        sync: false            # set in the Render dashboard
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false            # the Supabase pooler connection string
+      - key: SESSION_SECRET
+        generateValue: true    # Render generates a strong random value

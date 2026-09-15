@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin login · EthiCraft Club</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/logo.png" />
+<script>
+  // Runs before first paint: a dark-mode visitor must never see a white flash.
+  // Deliberately inline and synchronous - an external file would load too late.
+  // Resolution order: the visitor's own saved choice, else their OS setting.
+  (() => {
+    try {
+      const saved = localStorage.getItem('ethicraft-theme');
+      const theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // Storage or matchMedia unavailable (Safari private mode): fall back to light.
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Semantic tokens, resolved from CSS custom properties. Because each token is
+  // stored as raw RGB channels, Tailwind's alpha modifiers (bg-surface/70) work.
+  const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+  tailwind.config = {
+    darkMode: ['class', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          bg:        token('bg'),
+          surface:   token('surface'),
+          surface2:  token('surface-2'),
+          deep:      token('deep'),
+          deep2:     token('deep-2'),
+          ink:       token('text'),
+          muted:     token('muted'),
+          ondeep:    token('on-deep'),
+          line:      token('border'),
+          lineStrong:token('border-strong'),
+          sky:     { brand: token('brand-sky'),   dark: token('brand-sky-dk') },
+          magenta: { brand: token('brand-magenta') },
+          amber:   { brand: token('brand-amber'), deep: token('brand-amber-dk') },
+        },
+        fontFamily: {
+          sans:    ['Inter', 'system-ui', 'sans-serif'],
+          display: ['Fraunces', 'Georgia', 'serif'],
+          mono:    ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="min-h-screen bg-deep2">
+<!-- Decorative wash. Clipped here: the blobs are deliberately positioned
+     past the edges, and without this they widen the page on every screen. -->
+<div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+  <div class="ec-blob h-72 w-72 bg-sky-brand" style="top:-4rem; left:-3rem;"></div>
+  <div class="ec-blob h-72 w-72 bg-magenta-brand" style="bottom:-5rem; right:-3rem; animation-delay:-6s;"></div>
+</div>
+
+<div class="absolute right-5 top-5 z-10"><button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+  <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+  <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+</button></div>
+
+<main class="relative grid min-h-screen place-items-center px-5 py-12">
+  <div class="w-full max-w-md">
+    <div class="text-center">
+      <img src="/assets/logo.png" alt="" class="mx-auto h-16 w-16" width="64" height="64" />
+      <h1 class="mt-5 font-display text-3xl font-bold text-white">Club admin</h1>
+      <p class="mt-2 text-sm text-ondeep/60">Sign in to publish events to the EthiCraft site.</p>
+    </div>
+
+    <form id="loginForm" class="mt-8 rounded-2xl bg-surface p-7 shadow-2xl" novalidate>
+      <div id="loginError" class="mb-5 hidden rounded-xl bg-magenta-brand/8 px-4 py-3 text-sm font-medium text-magenta-brand ring-1 ring-inset ring-magenta-brand/20" role="alert"></div>
+
+      <label class="block text-sm font-semibold text-ink" for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" required autofocus
+             class="mt-2 w-full rounded-xl border border-line bg-bg px-4 py-3 text-ink outline-none transition focus:border-sky-brand focus:bg-surface" />
+
+      <label class="mt-5 block text-sm font-semibold text-ink" for="password">Password</label>
+      <div class="relative mt-2">
+        <input id="password" name="password" type="password" autocomplete="current-password" required
+               class="w-full rounded-xl border border-line bg-bg px-4 py-3 pr-12 text-ink outline-none transition focus:border-sky-brand focus:bg-surface" />
+        <button type="button" id="togglePw" aria-label="Show password"
+                class="absolute inset-y-0 right-0 grid w-12 place-items-center text-ink/40 transition hover:text-ink">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+
+      <button id="loginSubmit" type="submit"
+              class="mt-7 w-full rounded-xl bg-deep py-3.5 font-bold text-white transition hover:bg-sky-dark disabled:opacity-60">
+        Sign in
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-ondeep/45">
+      <a href="/" class="ec-taplink transition hover:text-ondeep">← Back to the public site</a>
+    </p>
+  </div>
+</main>
+
+<script src="/js/theme.js"></script>
+<script>
+(() => {
+  'use strict';
+  const form = document.getElementById('loginForm');
+  const errorBox = document.getElementById('loginError');
+  const submit = document.getElementById('loginSubmit');
+  const pw = document.getElementById('password');
+
+  document.getElementById('togglePw').addEventListener('click', (e) => {
+    const shown = pw.type === 'text';
+    pw.type = shown ? 'password' : 'text';
+    e.currentTarget.setAttribute('aria-label', shown ? 'Show password' : 'Hide password');
+    pw.focus();
+  });
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.remove('hidden');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.add('hidden');
+    submit.disabled = true;
+    submit.textContent = 'Signing in…';
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value.trim(),
+          password: pw.value,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Sign in failed. Please try again.');
+      // The dashboard is this page's parent path, so derive it rather than
+      // hardcoding - the admin path is configurable via ADMIN_PATH.
+      window.location.href = window.location.pathname.replace(/\/login\/?$/, '') || '/';
+    } catch (err) {
+      showError(err.message);
+      submit.disabled = false;
+      submit.textContent = 'Sign in';
+      pw.value = '';
+      pw.focus();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,578 @@
+/* ============================================================
+   EthiCraft Club — design system
+
+   Colour is expressed as SEMANTIC tokens (surface, text, border),
+   never as literal hues, so switching themes is one block of
+   variable reassignments rather than a dark: variant on every
+   element. Tokens are stored as space-separated RGB channels so
+   Tailwind's alpha modifiers (bg-surface/70) keep working:
+       colors: { surface: 'rgb(var(--surface) / <alpha-value>)' }
+   ============================================================ */
+
+/* ---------------------------------------------------- LIGHT (default) */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg:        253 249 240;   /* page ground        */
+  --surface:   255 255 255;   /* cards, panels      */
+  --surface-2: 244 236 224;   /* inset / alt band   */
+  --deep:       20  48  92;   /* full-bleed navy    */
+  --deep-2:     13  32  67;
+
+  /* Ink */
+  --text:       20  48  92;
+  --muted:      90 106 133;
+  --on-deep:   253 249 240;   /* text on --deep     */
+
+  /* Lines */
+  --border:    226 218 204;
+  --border-strong: 205 193 174;
+
+  /* Brand — constant identity across themes, tuned per theme */
+  --brand-sky:     69 190 232;
+  --brand-sky-dk:  21 117 151;   /* darkened from #1c9cc9: needs 4.5:1 for chip text */
+  --brand-magenta:192  57 143;
+  --brand-amber:  247 168  27;
+  --brand-amber-dk: 150 104  34;  /* darkened from #d1902f: icons + chip text need AA */
+
+  /* Effects */
+  --shadow-sm: 0 1px 2px rgb(20 48 92 / 6%), 0 4px 12px rgb(20 48 92 / 6%);
+  --shadow-md: 0 8px 28px rgb(20 48 92 / 10%), 0 2px 6px rgb(20 48 92 / 6%);
+  --shadow-lg: 0 24px 60px rgb(20 48 92 / 16%);
+  --glow: none;
+  --hero-scrim-1: rgb(13 32 67 / 78%);
+  --hero-scrim-2: rgb(13 32 67 / 88%);
+  --grain-opacity: .035;
+  --blob-opacity: .5;
+
+  --ec-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ------------------------------------------------------------- DARK */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:         10  14  23;
+  --surface:    19  25  39;
+  --surface-2:  27  35  53;
+  --deep:        6   9  16;
+  --deep-2:      4   6  11;
+
+  --text:      232 238 246;
+  --muted:     146 162 186;
+  --on-deep:   232 238 246;
+
+  --border:     38  48  68;
+  --border-strong: 55  68  94;
+
+  /* Saturated hues go muddy on dark ground — lift them. */
+  --brand-sky:     108 207 240;
+  --brand-sky-dk:   69 190 232;
+  --brand-magenta: 232 106 184;
+  --brand-amber:   251 191  60;
+  --brand-amber-dk:247 168  27;
+
+  /* Drop shadows read as smudges on dark; lean on glow + hairlines. */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 8px 28px rgb(0 0 0 / 50%);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 60%);
+  --glow: 0 0 0 1px rgb(var(--brand-sky) / 12%);
+  --hero-scrim-1: rgb(4 6 11 / 82%);
+  --hero-scrim-2: rgb(4 6 11 / 93%);
+  --grain-opacity: .05;
+  --blob-opacity: .32;
+}
+
+/* ------------------------------------------------------------- base */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+body {
+  /* Decorative layers are positioned past the edges on purpose. `clip` contains
+     them without creating a scroll container - unlike `hidden`, which would
+     silently break `position: sticky` in the charter and mentor sections. */
+  overflow-x: hidden;
+  overflow-x: clip;
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Colour/shadow changes ease; layout never does. Scoped to the themed
+   properties so hovers and transforms keep their own timing. */
+body, body * {
+  transition: background-color .35s ease, border-color .35s ease,
+              color .35s ease, box-shadow .35s ease;
+}
+body.is-theme-switching *,
+body.is-theme-switching { transition-duration: .35s; }
+
+.font-display { font-family: "Fraunces", Georgia, "Times New Roman", serif; }
+
+/* A long unbroken string (a pasted meeting URL, a hashtag) must wrap instead of
+   pushing its container past the viewport. */
+h1, h2, h3, p, dd, dt, li, a, span { overflow-wrap: break-word; }
+/* Grid and flex children default to min-width:auto, which refuses to shrink
+   below their content. This is the usual cause of "why is my grid overflowing". */
+.ec-row > *, .ec-spec > * { min-width: 0; }
+.font-mono-tech { font-family: var(--ec-mono); }
+
+/* Film grain. One fixed layer over the whole page rather than per-section
+   backgrounds, so it never tiles out of alignment across bands. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Content sits above the grain. */
+header, main, footer { position: relative; z-index: 2; }
+
+/* --------------------------------------------------------- brand bits */
+
+.ec-gradient-text {
+  background: linear-gradient(100deg,
+    rgb(var(--brand-magenta)), rgb(var(--brand-amber)) 55%, rgb(var(--brand-sky)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ec-rule {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    rgb(var(--brand-amber)), rgb(var(--brand-magenta)) 50%, rgb(var(--brand-sky)));
+}
+
+.ec-card {
+  background: rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm), var(--glow);
+  transition: transform .3s cubic-bezier(.22,.61,.36,1), box-shadow .3s ease,
+              border-color .3s ease, background-color .35s ease;
+}
+.ec-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgb(var(--brand-sky) / 50%);
+}
+
+/* ------------------------------------------------------------ nav */
+
+.ec-nav { transition: background-color .3s ease, box-shadow .3s ease, backdrop-filter .3s ease; }
+
+/* Before the page scrolls, the bar is transparent over the dark hero photo.
+   In the light theme its ink token is dark navy, which left the wordmark and
+   links nearly unreadable against that image, so pin them to light-on-dark
+   until the solid background slides in. */
+.ec-nav:not([data-scrolled="true"]) .ec-nav-ink { color: #fff; }
+.ec-nav:not([data-scrolled="true"]) .ec-nav-ink-soft { color: rgb(255 255 255 / 78%); }
+.ec-nav:not([data-scrolled="true"]) .ec-nav-ink-soft:hover { color: #fff; }
+.ec-nav:not([data-scrolled="true"]) .ec-theme-toggle {
+  color: #fff;
+  border-color: rgb(255 255 255 / 30%);
+  background: rgb(255 255 255 / 12%);
+}
+.ec-nav:not([data-scrolled="true"]) #navToggle {
+  color: #fff;
+  border-color: rgb(255 255 255 / 30%);
+  background: rgb(255 255 255 / 12%);
+}
+
+.ec-nav[data-scrolled="true"] {
+  background: rgb(var(--bg) / 85%);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  box-shadow: 0 1px 0 rgb(var(--border)), var(--shadow-sm);
+}
+
+/* Inline links need a finger-sized hit area even though the text is small.
+   44px is the usable floor; WCAG 2.5.8 asks for at least 24px. */
+.ec-navlink,
+.ec-taplink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.ec-navlink::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: .6rem;
+  height: 2px; width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(var(--brand-magenta)), rgb(var(--brand-sky)));
+  transition: width .28s cubic-bezier(.22,.61,.36,1);
+}
+.ec-navlink:hover::after,
+.ec-navlink[aria-current="true"]::after { width: 100%; }
+
+/* ----------------------------------------------------------- hero */
+
+.ec-hero-photo {
+  background-image:
+    linear-gradient(to bottom, var(--hero-scrim-1), var(--hero-scrim-2)),
+    var(--hero-src, none);
+  background-size: cover;
+  background-position: center 38%;
+}
+
+/* Gradient mesh: three offset radial washes, the modern replacement for a
+   flat overlay. Cheaper than a real mesh and theme-reactive. */
+.ec-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 15% 20%, rgb(var(--brand-magenta) / 22%), transparent 60%),
+    radial-gradient(50% 45% at 85% 15%, rgb(var(--brand-sky) / 24%), transparent 60%),
+    radial-gradient(55% 50% at 60% 90%, rgb(var(--brand-amber) / 16%), transparent 65%);
+}
+
+.ec-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(46px);
+  opacity: var(--blob-opacity);
+  animation: ec-float 14s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ec-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -26px, 0) scale(1.08); }
+}
+
+/* ------------------------------------------------- reveal on scroll */
+
+.ec-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1);
+}
+.ec-reveal.is-visible { opacity: 1; transform: none; }
+
+/* If JavaScript never runs, the reveal class would leave the whole page at
+   opacity 0. Content must not depend on script to be readable. */
+.no-js .ec-reveal { opacity: 1; transform: none; }
+
+/* --------------------------------------------------------- technical */
+
+.ec-label {
+  font-family: var(--ec-mono);
+  /* Was .68rem (10.9px), which audited as too small on a 375px screen. */
+  font-size: .74rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-feature-settings: "tnum" 1;
+}
+
+.ec-index {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-family: var(--ec-mono);
+  font-size: .74rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.ec-index::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: .22;
+}
+
+.ec-grid-bg {
+  background-image:
+    linear-gradient(rgb(var(--border-strong) / 45%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--border-strong) / 45%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+.ec-grid-bg-dark {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 7%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 7%) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.ec-bracket { position: relative; }
+.ec-bracket::before,
+.ec-bracket::after {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 1.5px solid currentColor;
+  opacity: .3;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+.ec-bracket::before { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+.ec-bracket::after { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+.ec-bracket:hover::before,
+.ec-bracket:hover::after { opacity: .7; }
+
+.ec-spec {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: .5rem;
+  font-family: var(--ec-mono);
+  font-size: .76rem;
+  font-feature-settings: "tnum" 1;
+}
+.ec-spec > .ec-spec-dots {
+  border-bottom: 1px dotted rgb(var(--border-strong));
+  transform: translateY(-.2em);
+}
+.ec-spec-key { letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.ec-spec-val { font-weight: 600; text-align: right; }
+
+.ec-ticks {
+  height: 8px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 8px);
+  opacity: .28;
+}
+
+.ec-digit {
+  font-family: var(--ec-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.ec-status { position: relative; display: inline-flex; height: .5rem; width: .5rem; }
+.ec-status::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  animation: ec-pulse 2s cubic-bezier(.4,0,.6,1) infinite;
+}
+.ec-status::after {
+  content: "";
+  position: relative;
+  height: .5rem; width: .5rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+@keyframes ec-pulse {
+  0%   { transform: scale(1);   opacity: .75; }
+  70%  { transform: scale(2.4); opacity: 0;   }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+
+/* -------------------------------------------------------- utilities */
+
+.ec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid rgb(var(--brand-sky));
+  outline-offset: 2px;
+  border-radius: .4rem;
+}
+
+.ec-poster {
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  width: 100%;
+  background: rgb(var(--surface-2));
+}
+
+.ec-skeleton {
+  background: linear-gradient(90deg,
+    rgb(var(--surface-2)) 25%, rgb(var(--surface)) 50%, rgb(var(--surface-2)) 75%);
+  background-size: 200% 100%;
+  animation: ec-shimmer 1.4s linear infinite;
+}
+@keyframes ec-shimmer { to { background-position: -200% 0; } }
+
+/* ------------------------------------------------------ theme toggle */
+
+.ec-theme-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 2.75rem;
+  width: 2.75rem;
+  border-radius: .75rem;
+  border: 1px solid rgb(var(--border));
+  background: rgb(var(--surface) / 70%);
+  color: rgb(var(--text));
+  overflow: hidden;
+}
+.ec-theme-toggle:hover { border-color: rgb(var(--brand-sky) / 60%); }
+
+/* Both icons stack; the inactive one rotates out. */
+.ec-theme-toggle svg {
+  grid-area: 1 / 1;
+  transition: transform .45s cubic-bezier(.22,.61,.36,1), opacity .3s ease;
+}
+.ec-icon-sun  { opacity: 0; transform: rotate(-90deg) scale(.5); }
+.ec-icon-moon { opacity: 1; transform: rotate(0)      scale(1);  }
+[data-theme="dark"] .ec-icon-sun  { opacity: 1; transform: rotate(0)     scale(1);  }
+[data-theme="dark"] .ec-icon-moon { opacity: 0; transform: rotate(90deg) scale(.5); }
+
+/* --------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ec-reveal { opacity: 1; transform: none; transition: none; }
+  .ec-blob, .ec-skeleton { animation: none; }
+  .ec-status::before { animation: none; opacity: .4; }
+  .ec-card:hover { transform: none; }
+  body, body * { transition-duration: .01ms !important; }
+}
+
+@media print {
+  .ec-nav, .ec-blob, .ec-mesh, footer { display: none !important; }
+  body { background: #fff; color: #000; }
+  body::after { display: none; }
+}
+
+/* ============================================================
+   EDITORIAL LAYER
+   The default club-site look is a symmetric grid of identical
+   cards with emoji icons. This replaces that with a printed
+   almanac vocabulary: numbered index rows, oversized numerals
+   bleeding off the edge, a running ticker, and a drawn icon set.
+   ============================================================ */
+
+/* ---- Running ticker ---------------------------------------------------- */
+
+.ec-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ec-marquee__track {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding-right: 2.5rem;
+  min-width: 100%;
+  animation: ec-marquee 38s linear infinite;
+}
+.ec-marquee:hover .ec-marquee__track { animation-play-state: paused; }
+@keyframes ec-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ---- Numbered index rows (replaces the 8-identical-cards grid) ---------- */
+
+.ec-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 1.25rem 1.5rem;
+  align-items: start;
+  padding: 1.6rem 0;
+  border-top: 1px solid rgb(var(--border));
+  transition: background-color .3s ease, padding-left .35s cubic-bezier(.22,.61,.36,1);
+}
+.ec-row:last-child { border-bottom: 1px solid rgb(var(--border)); }
+.ec-row::before {
+  content: "";
+  position: absolute;
+  left: -1.25rem; right: -1.25rem; top: -1px; bottom: -1px;
+  border-radius: .75rem;
+  background: rgb(var(--surface));
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: -1;
+}
+.ec-row:hover::before { opacity: 1; }
+.ec-row:hover { padding-left: .6rem; }
+
+@media (min-width: 768px) {
+  .ec-row { grid-template-columns: 3.5rem 15rem 1fr; align-items: baseline; }
+}
+
+.ec-row__num {
+  font-family: var(--ec-mono);
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: rgb(var(--muted));
+  padding-top: .2rem;
+}
+
+/* ---- Oversized numerals for the module diptych ------------------------- */
+
+.ec-bignum {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(5rem, 14vw, 11rem);
+  line-height: .78;
+  letter-spacing: -.04em;
+  -webkit-text-stroke: 1.5px rgb(var(--on-deep) / 28%);
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---- Vertical rail label ----------------------------------------------- */
+
+.ec-rail {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  font-family: var(--ec-mono);
+  font-size: .7rem;
+}
+
+/* ---- Drawn icon set ---------------------------------------------------- */
+
+.ec-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  overflow: visible;
+}
+.ec-icon .dot { fill: currentColor; stroke: none; }
+
+/* Hairline that splits a full-bleed band from the next. */
+.ec-seam {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgb(var(--border-strong)) 15%, rgb(var(--border-strong)) 85%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-marquee__track { animation: none; }
+  .ec-row:hover { padding-left: 0; }
+}
