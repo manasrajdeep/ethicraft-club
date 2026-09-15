@@ -3,6 +3,8 @@
 require('dotenv').config();
 
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
@@ -126,15 +128,43 @@ app.use('/api/', rateLimit({
 
 /* ------------------------------------------------------------------ pages */
 
-app.get('/', (_req, res) => res.sendFile(path.join(VIEWS_DIR, 'index.html')));
+/**
+ * Static assets are cached for a week, but their filenames never change — so a
+ * returning visitor would keep an old stylesheet long after a deploy. Each page
+ * is read once at boot with a content hash appended to its asset URLs, so a
+ * changed file gets a new URL and the cache is bypassed automatically.
+ */
+const ASSET_RE = /(\/(?:css|js)\/[\w.-]+\.(?:css|js))/g;
+const pageCache = new Map();
+
+function assetVersion(urlPath) {
+  const file = path.join(PUBLIC_DIR, urlPath);
+  try {
+    return crypto.createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 10);
+  } catch {
+    return '0';
+  }
+}
+
+function renderPage(name) {
+  if (pageCache.has(name)) return pageCache.get(name);
+  const html = fs.readFileSync(path.join(VIEWS_DIR, name), 'utf8')
+    .replace(ASSET_RE, (m) => `${m}?v=${assetVersion(m)}`);
+  pageCache.set(name, html);
+  return html;
+}
+
+const sendPage = (name) => (_req, res) => {
+  res.type('html').set('Cache-Control', 'no-cache').send(renderPage(name));
+};
+
+app.get('/', sendPage('index.html'));
 
 app.get(LOGIN_PATH, (req, res) => {
   if (req.session?.admin) return res.redirect(ADMIN_PATH);
-  res.sendFile(path.join(VIEWS_DIR, 'login.html'));
+  sendPage('login.html')(req, res);
 });
-app.get(ADMIN_PATH, requireAuthPage(LOGIN_PATH), (_req, res) => {
-  res.sendFile(path.join(VIEWS_DIR, 'admin.html'));
-});
+app.get(ADMIN_PATH, requireAuthPage(LOGIN_PATH), sendPage('admin.html'));
 
 // Tells the login and dashboard pages where to post without hardcoding the path.
 app.get('/api/config', (_req, res) => {
@@ -186,7 +216,7 @@ app.use(express.static(PUBLIC_DIR, IS_PROD
 
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-  res.status(404).sendFile(path.join(VIEWS_DIR, '404.html'));
+  res.status(404).type('html').set('Cache-Control', 'no-cache').send(renderPage('404.html'));
 });
 
 // eslint-disable-next-line no-unused-vars -- Express needs the 4-arg signature.

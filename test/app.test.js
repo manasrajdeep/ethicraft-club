@@ -675,7 +675,7 @@ describe('responsive', () => {
       assert.doesNotMatch(html, /cdn\.tailwindcss\.com/,
         `${page} must not load a runtime CSS compiler - it leaves phones on slow ` +
         'connections rendering an unstyled, overflowing page');
-      assert.match(html, /href="\/css\/app\.css"/, `${page} links the built stylesheet`);
+      assert.match(html, /href="\/css\/app\.css(\?v=[0-9a-f]+)?"/, `${page} links the built stylesheet`);
     }
     const css = await (await fetch(`${base}/css/app.css`));
     assert.equal(css.status, 200);
@@ -700,6 +700,22 @@ describe('responsive', () => {
     assert.ok(csp, 'CSP present');
     assert.doesNotMatch(csp, /unsafe-eval/, 'eval is only needed by a runtime compiler');
     assert.doesNotMatch(csp, /cdn\.tailwindcss\.com/);
+  });
+
+  test('asset URLs are content-hashed so a deploy cannot serve stale CSS', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    const assets = [...html.matchAll(/\/(?:css|js)\/[\w.-]+\.(?:css|js)(\?v=[0-9a-f]+)?/g)];
+    assert.ok(assets.length >= 3, 'page links stylesheets and scripts');
+    for (const [url, version] of assets) {
+      assert.ok(version, `${url} must carry a ?v= content hash`);
+      const res = await fetch(`${base}${url}`);
+      assert.equal(res.status, 200, `${url} resolves`);
+    }
+  });
+
+  test('HTML is never cached, so a new deploy is picked up immediately', async () => {
+    const res = await fetch(`${base}/`);
+    assert.match(res.headers.get('cache-control'), /no-cache/);
   });
 
   test('content is readable with JavaScript disabled', async () => {
