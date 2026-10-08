@@ -134,8 +134,10 @@ function rowToEvent(row) {
     zoomLink: row.zoom_link || '',
     registrationLink: row.registration_link || '',
     // `has_poster` is computed in the SELECT so we never load the bytes to
-    // answer "is there a poster?".
-    posterPath: row.has_poster ? `/posters/${row.id}` : '',
+    // answer "is there a poster?". The URL carries the row's last update:
+    // posters are cached for a day, so a replaced poster needs a new URL or
+    // browsers that saw the old one keep showing it.
+    posterPath: row.has_poster ? `/posters/${row.id}?v=${new Date(row.updated_at).getTime()}` : '',
     topics: Array.isArray(row.topics) ? row.topics : [],
     published: Boolean(row.published),
     createdAt: row.created_at,
@@ -154,4 +156,14 @@ async function close() {
   await pool.end();
 }
 
-module.exports = { pool, query, migrate, ensureAdminUser, rowToEvent, EVENT_COLUMNS, close };
+/**
+ * A one-line reason for a failed start. Connecting to "localhost" tries IPv6
+ * and IPv4, and when both are refused Node throws an AggregateError with an
+ * empty message: startup used to print "Failed to start:" and nothing else.
+ */
+function describeError(err) {
+  const reason = err?.message || err?.errors?.map((e) => e.message).join(', ') || String(err);
+  return err?.code === 'ECONNREFUSED' ? `${reason} (is Postgres running?)` : reason;
+}
+
+module.exports = { pool, query, migrate, ensureAdminUser, rowToEvent, EVENT_COLUMNS, close, describeError };

@@ -5,14 +5,15 @@
  * that static inspection cannot catch: horizontal overflow, elements wider than
  * the screen, tap targets below the 44px minimum, and unreadable text.
  *
- *   node test/responsive-audit.js [baseUrl]
+ *   node test/responsive-audit.js            boots a throwaway test server
+ *   node test/responsive-audit.js <baseUrl>  audits a server that is already up
  */
 const puppeteer = require('puppeteer');
 const fs = require('node:fs');
 const path = require('node:path');
+const { startServer } = require('./helpers');
 
-const BASE = process.argv[2] || 'http://localhost:3000';
-const SHOTS = path.join(__dirname, '..', '.audit-shots');
+const SHOTS = path.join(__dirname, '..', '.audit-shots', 'responsive');
 
 const DEVICES = [
   { name: 'iPhone SE',        width: 375,  height: 667,  dsf: 2, mobile: true },
@@ -26,12 +27,6 @@ const DEVICES = [
   { name: 'Laptop',           width: 1280, height: 800,  dsf: 2, mobile: false },
   { name: 'Desktop',          width: 1440, height: 900,  dsf: 2, mobile: false },
   { name: 'Wide',             width: 1920, height: 1080, dsf: 1, mobile: false },
-];
-
-const PAGES = [
-  { path: '/', name: 'home' },
-  { path: `${require('./helpers').TEST_ADMIN.path}/login`, name: 'login' },
-  { path: '/no-such-page', name: '404' },
 ];
 
 /** Runs inside the page: finds everything that breaks the viewport. */
@@ -119,48 +114,71 @@ function collectFaults() {
 }
 
 (async () => {
-  fs.rmSync(SHOTS, { recursive: true, force: true });
-  fs.mkdirSync(SHOTS, { recursive: true });
-
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  // Without a URL, audit a disposable server the way the integration suite does.
+  const server = process.argv[2] ? null : await startServer();
+  const BASE = process.argv[2] || server.base;
+  let browser;
   let total = 0;
-  const seen = new Set();
+  let pageCount = 0;
 
-  for (const device of DEVICES) {
-    for (const spec of PAGES) {
-      const page = await browser.newPage();
-      await page.setViewport({
-        width: device.width, height: device.height,
-        deviceScaleFactor: 1, isMobile: device.mobile, hasTouch: device.mobile,
-      });
-      await page.goto(`${BASE}${spec.path}`, { waitUntil: 'networkidle0', timeout: 30000 });
-      await new Promise((r) => setTimeout(r, 450));   // let reveals settle
+  try {
+    // The login page lives under ADMIN_PATH, which differs per server. Ask
+    // rather than guess: a wrong guess silently audits the 404 page twice.
+    const { loginPath } = await (await fetch(`${BASE}/api/config`)).json();
+    const PAGES = [
+      { path: '/', name: 'home' },
+      { path: loginPath, name: 'login' },
+      { path: '/no-such-page', name: '404' },
+    ];
+    pageCount = PAGES.length;
 
-      const faults = await page.evaluate(collectFaults);
-      if (faults.length) {
-        console.log(`\n  ${device.name} (${device.width}px) — ${spec.name}`);
-        for (const f of faults) {
-          const key = `${f.type}|${f.detail}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          console.log(`    [${f.type}] ${f.detail}`);
-          total += 1;
-        }
-      }
+    fs.rmSync(SHOTS, { recursive: true, force: true });
+    fs.mkdirSync(SHOTS, { recursive: true });
 
-      if (spec.name === 'home') {
-        await page.screenshot({
-          path: path.join(SHOTS, `${device.width}-${spec.name}.png`),
-          fullPage: device.width <= 834,
+    browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+    const seen = new Set();
+
+    for (const device of DEVICES) {
+      for (const spec of PAGES) {
+        const page = await browser.newPage();
+        await page.setViewport({
+          width: device.width, height: device.height,
+          deviceScaleFactor: 1, isMobile: device.mobile, hasTouch: device.mobile,
         });
+        await page.goto(`${BASE}${spec.path}`, { waitUntil: 'networkidle0', timeout: 30000 });
+        await new Promise((r) => setTimeout(r, 450));   // let reveals settle
+
+        const faults = await page.evaluate(collectFaults);
+        if (faults.length) {
+          console.log(`\n  ${device.name} (${device.width}px) — ${spec.name}`);
+          for (const f of faults) {
+            const key = `${f.type}|${f.detail}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            console.log(`    [${f.type}] ${f.detail}`);
+            total += 1;
+          }
+        }
+
+        if (spec.name === 'home') {
+          await page.screenshot({
+            path: path.join(SHOTS, `${device.width}-${spec.name}.png`),
+            fullPage: device.width <= 834,
+          });
+        }
+        await page.close();
       }
-      await page.close();
     }
+  } finally {
+    await browser?.close();
+    await server?.stop();
   }
 
-  await browser.close();
   console.log(total === 0
-    ? `\n  No layout faults across ${DEVICES.length} viewports x ${PAGES.length} pages.\n`
+    ? `\n  No layout faults across ${DEVICES.length} viewports x ${pageCount} pages.\n`
     : `\n  ${total} distinct fault(s) found.\n`);
   process.exit(total === 0 ? 0 : 1);
-})();
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

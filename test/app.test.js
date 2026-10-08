@@ -2,7 +2,8 @@
 
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN, TEST_ADMIN } = require('./helpers');
+const { spawnSync } = require('node:child_process');
+const { startServer, makeJar, login, formData, PNG_1PX, JPEG_MIN, TEST_ADMIN, ROOT } = require('./helpers');
 
 let server, base;
 const jar = makeJar();
@@ -44,6 +45,19 @@ describe('infrastructure', () => {
   test('does not advertise the server implementation', async () => {
     const res = await fetch(`${base}/`);
     assert.equal(res.headers.get('x-powered-by'), null);
+  });
+
+  test('an unreachable database is reported with a reason, not a blank line', () => {
+    // Nothing listens on port 1. "localhost" tries IPv6 and IPv4, and the two
+    // refusals arrive as an AggregateError whose message is empty.
+    const run = spawnSync(process.execPath, ['server/index.js'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: 20000,
+      env: { ...process.env, NODE_ENV: 'test', DATABASE_URL: 'postgres://localhost:1/none' },
+    });
+    assert.equal(run.status, 1);
+    assert.match(run.stderr, /Failed to start: \S.*ECONNREFUSED.*is Postgres running\?/);
   });
 });
 
@@ -163,15 +177,17 @@ describe('authentication', () => {
 /* ========================================================== public events API */
 
 describe('public events API', () => {
+  // The seeded event is dated 2026-09-16, so look it up across all scopes:
+  // under `upcoming` these tests started failing the day after.
   test('the seeded launch event carries the registration link', async () => {
-    const { events } = await json(await fetch(`${base}/api/events?scope=upcoming`));
+    const { events } = await json(await fetch(`${base}/api/events?scope=all`));
     const seeded = events.find((e) => e.title === 'From Then to Now: Alumni Tales');
     assert.ok(seeded, 'seeded event present');
     assert.equal(seeded.registrationLink, 'https://tinyurl.com/ethicraftpict');
   });
 
   test('returns the seeded launch event', async () => {
-    const { events } = await json(await fetch(`${base}/api/events?scope=upcoming`));
+    const { events } = await json(await fetch(`${base}/api/events?scope=all`));
     const seeded = events.find((e) => e.title === 'From Then to Now: Alumni Tales');
     assert.ok(seeded, 'seeded event present');
     assert.equal(seeded.mode, 'Zoom');
@@ -299,8 +315,8 @@ describe('poster uploads', () => {
     });
     assert.equal(res.status, 201);
     const { event } = await json(res);
-    assert.match(event.posterPath, /^\/posters\/\d+$/,
-      'poster URL is an id, never a caller-supplied filename');
+    assert.match(event.posterPath, /^\/posters\/\d+\?v=\d+$/,
+      'poster URL is an id plus a version, never a caller-supplied filename');
     assert.ok(!event.posterPath.includes('..'), 'no traversal in stored path');
 
     const fetched = await fetch(`${base}${event.posterPath}`);
@@ -350,7 +366,7 @@ describe('poster uploads', () => {
     assert.equal((await fetch(`${base}${poster}`)).status, 404, 'orphaned poster cleaned up');
   });
 
-  test('replacing a poster swaps the bytes behind a stable URL', async () => {
+  test('replacing a poster swaps the bytes and changes the URL', async () => {
     const created = await json(await fetch(`${base}/api/admin/events`, {
       method: 'POST', headers: jar.header,
       body: formData({ title: 'Swap', eventDate: '2027-05-05', mode: 'Offline' },
@@ -367,15 +383,19 @@ describe('poster uploads', () => {
       body: formData({}, { buffer: JPEG_MIN, type: 'image/jpeg', name: 'b.jpg' }),
     }));
 
-    // The URL is the event id, so it is stable across replacements by design.
-    assert.equal(updated.event.posterPath, url);
+    // Posters are cached for a day without revalidating, so a browser that saw
+    // the old one only fetches the new one if the URL changes. A new ETag alone
+    // is never consulted while the cached copy is still fresh.
+    const [path, oldVersion] = url.split('?');
+    const [newPath, newVersion] = updated.event.posterPath.split('?');
+    assert.equal(newPath, path, 'still addressed by the event id');
+    assert.notEqual(newVersion, oldVersion, 'a replaced poster gets a new URL');
 
-    const after = await fetch(`${base}${url}`);
+    const after = await fetch(`${base}${updated.event.posterPath}`);
     const afterBytes = Buffer.from(await after.arrayBuffer());
     assert.equal(after.headers.get('content-type'), 'image/jpeg', 'new mime type served');
     assert.ok(!beforeBytes.equals(afterBytes), 'the stored bytes actually changed');
-    assert.notEqual(before.headers.get('etag'), after.headers.get('etag'),
-      'ETag changes so caches do not serve the old poster');
+    assert.notEqual(before.headers.get('etag'), after.headers.get('etag'), 'ETag changes with the poster');
   });
 
   test('removePoster clears the image', async () => {
@@ -591,6 +611,15 @@ describe('frontend assets', () => {
     const html = await (await fetch(`${base}/`)).text();
     assert.ok(html.indexOf('ethicraft-theme') < html.indexOf('css/styles.css'),
       'inline theme script must precede the stylesheet');
+  });
+
+  test('event times are read as IST, wherever the visitor is', async () => {
+    // Read in the visitor's own timezone, the countdown and the .ics entry were
+    // hours out for anyone abroad. `npm run test:e2e` checks the behaviour in a
+    // real browser set to other timezones.
+    const js = await (await fetch(`${base}/js/main.js`)).text();
+    assert.match(js, /const IST_OFFSET = '\+05:30';/, 'times are pinned to IST');
+    assert.doesNotMatch(js, /new Date\(y, m - 1, d, hh/, 'no event time is built in the local timezone');
   });
 });
 

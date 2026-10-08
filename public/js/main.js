@@ -45,22 +45,31 @@
     return start || end || 'Time to be announced';
   }
 
-  /** Combines the stored date + time into a local Date. Times are wall-clock IST for PICT. */
+  /**
+   * Times are stored as wall-clock IST, so they are pinned to +05:30 here.
+   * Reading them in the visitor's own timezone put the countdown and the .ics
+   * entry hours out for anyone outside India. India has no daylight saving, so
+   * the offset is fixed.
+   */
+  const IST_OFFSET = '+05:30';
+
+  /** '2026-09-16' + '19:30' -> the Date for 7.30 pm IST that day, or null. */
+  function istDate(iso, hhmm) {
+    const [hh, mm] = (hhmm || '00:00').split(':').map(Number);
+    const pad = (n) => String(n || 0).padStart(2, '0');
+    const date = new Date(`${iso}T${pad(hh)}:${pad(mm)}:00${IST_OFFSET}`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
   function eventStart(event) {
-    const [y, m, d] = String(event.eventDate).split('-').map(Number);
-    if (!y) return null;
-    const [hh, mm] = (event.startTime || '00:00').split(':').map(Number);
-    return new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+    return istDate(event.eventDate, event.startTime);
   }
 
   function eventEnd(event) {
     const start = eventStart(event);
     if (!start) return null;
     if (!event.endTime) return new Date(start.getTime() + 60 * 60 * 1000);
-    const [hh, mm] = event.endTime.split(':').map(Number);
-    const end = new Date(start);
-    end.setHours(hh || 0, mm || 0, 0, 0);
-    return end;
+    return istDate(event.eventDate, event.endTime);
   }
 
   /** RFC 5545 escaping: commas, semicolons, backslashes and newlines. */

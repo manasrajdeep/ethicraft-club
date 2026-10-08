@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
-const { query, migrate, ensureAdminUser, close } = require('../server/db');
+const { query, migrate, ensureAdminUser, close, describeError } = require('../server/db');
 
 const SEED_POSTER = path.join(__dirname, '..', 'assets-seed', 'alumni-tales.jpg');
 
@@ -82,7 +82,7 @@ if (require.main === module) {
     console.log(`Admin username: ${process.env.ADMIN_USERNAME || 'admin'}`);
     await close();
   })().catch((err) => {
-    console.error(err.message);
+    console.error(describeError(err));
     process.exit(1);
   });
 }

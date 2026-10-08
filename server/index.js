@@ -13,7 +13,7 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const PgSession = require('connect-pg-simple')(session);
 
-const { pool, query, migrate, ensureAdminUser, close } = require('./db');
+const { pool, query, migrate, ensureAdminUser, close, describeError } = require('./db');
 const { requireAuthPage } = require('./auth');
 const adminRoutes = require('./routes/admin');
 const { router: eventRoutes } = require('./routes/events');
@@ -283,7 +283,7 @@ async function start() {
 }
 
 start().catch((err) => {
-  console.error('\n  Failed to start:', err.message, '\n');
+  console.error('\n  Failed to start:', describeError(err), '\n');
   process.exit(1);
 });
 

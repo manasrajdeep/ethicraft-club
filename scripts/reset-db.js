@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { query, migrate, ensureAdminUser, close } = require('../server/db');
+const { query, migrate, ensureAdminUser, close, describeError } = require('../server/db');
 const { seedIfEmpty } = require('./seed');
 
 /** Drops every table this app owns and rebuilds from scratch. Destructive. */
@@ -14,6 +14,6 @@ const { seedIfEmpty } = require('./seed');
   console.log('Database reset and reseeded.');
   await close();
 })().catch((err) => {
-  console.error(err.message);
+  console.error(describeError(err));
   process.exit(1);
 });
