@@ -18,17 +18,27 @@ const { startServer, TEST_ADMIN, ROOT } = require('./helpers');
 const SHOTS = path.join(ROOT, '.audit-shots', 'e2e');
 const POSTER = path.join(ROOT, 'assets-seed', 'alumni-tales.jpg');
 const OTHER_POSTER = path.join(ROOT, 'public', 'assets', 'logo.png');
+// 1600px wide: bigger than the 1440px the gallery stores, so the upload shows
+// whether the browser really resized it.
+const BIG_PHOTO = path.join(ROOT, 'public', 'assets', 'hero-bg.jpg');
+const REGISTER = 'https://tinyurl.com/ethicraftpict';
 
 let failures = 0;
 const thirdParty = new Set();
 
+// The step a long check is on, so a timeout says where it stalled.
+let currentStep = '';
+const step = (label) => { currentStep = label; };
+
 async function check(name, fn) {
+  currentStep = '';
   try {
     await fn();
     console.log(`  ✔ ${name}`);
   } catch (err) {
     failures += 1;
-    console.log(`  ✖ ${name}\n      ${String(err.message).split('\n').join('\n      ')}`);
+    const where = currentStep ? ` (at: ${currentStep})` : '';
+    console.log(`  ✖ ${name}\n      ${`${err.message}${where}`.split('\n').join('\n      ')}`);
   }
 }
 
@@ -181,6 +191,73 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       assert(!p.length, p.join('\n'));
     });
 
+    await check('the nav shows the day logo by day and the night logo by night', async () => {
+      const shown = () => home.$$eval('#nav img', (imgs) => imgs
+        .filter((img) => getComputedStyle(img).display !== 'none').map((img) => img.getAttribute('src')));
+      const theme = await home.evaluate(() => document.documentElement.dataset.theme);
+      const first = await shown();
+      const expected = `/assets/logo-${theme === 'dark' ? 'night' : 'day'}.png`;
+      assert(first.length === 1 && first[0] === expected, `${theme} theme shows ${JSON.stringify(first)}`);
+      await (await visible(home, '[data-theme-toggle]')).click();
+      const flipped = await shown();
+      assert(flipped.length === 1 && flipped[0] !== expected, `after toggling: ${JSON.stringify(flipped)}`);
+      await (await visible(home, '[data-theme-toggle]')).click();   // put it back
+    });
+
+    await check('the past-activities strip moves, and its photos open in the lightbox', async () => {
+      await home.evaluate(() => window.scrollTo(0, 0));
+      await home.mouse.move(5, 700);   // hovering the strip pauses it
+      const track = () => home.$eval('#activityStrip .ec-strip__track', (el) => ({
+        items: el.children.length,
+        animation: getComputedStyle(el).animationName,
+        x: el.getBoundingClientRect().x,
+      }));
+      const a = await track();
+      assert(a.items >= 12 && a.animation === 'ec-marquee', `strip: ${JSON.stringify(a)}`);
+      await new Promise((r) => setTimeout(r, 700));
+      const b = await track();
+      assert(b.x < a.x, `the strip is not moving (${a.x} -> ${b.x})`);
+
+      await home.click('#activityStrip .js-photo');
+      await home.waitForSelector('#lightbox:not(.hidden)');
+      const caption = await home.$eval('#lightboxCaption', (el) => el.textContent);
+      assert(/\d+ \/ \d+/.test(caption), `caption: "${caption}"`);
+      const firstSrc = await home.$eval('#lightboxImg', (img) => img.src);
+      await home.keyboard.press('ArrowRight');
+      assert(await home.$eval('#lightboxImg', (img) => img.src) !== firstSrc, 'ArrowRight should move on');
+      await home.keyboard.press('Escape');
+      await home.waitForSelector('#lightbox.hidden');
+    });
+
+    await check('the gallery opens any photo in a lightbox you can step through', async () => {
+      const count = await home.$$eval('#galleryGrid .js-photo', (els) => els.length);
+      assert(count >= 12, `${count} photos in the gallery`);
+      const tile = await home.$('#galleryGrid .js-photo:nth-child(3)');
+      await tile.scrollIntoView();
+      await tile.click();
+      await home.waitForSelector('#lightbox:not(.hidden)');
+      const caption = () => home.$eval('#lightboxCaption', (el) => el.textContent);
+      assert((await caption()).endsWith(`3 / ${count}`), `caption: "${await caption()}"`);
+      assert(await home.$eval('#lightboxPrev', (el) => !el.classList.contains('hidden')), 'no previous button');
+      await home.click('#lightboxPrev');
+      assert((await caption()).endsWith(`2 / ${count}`), `after Previous: "${await caption()}"`);
+      await home.waitForFunction(() => {
+        const img = document.querySelector('#lightboxImg');
+        return img.complete && img.naturalWidth > 0;
+      });
+      await home.keyboard.press('Escape');
+      await home.waitForSelector('#lightbox.hidden');
+      const p = await homeProblems();
+      assert(!p.length, p.join('\n'));
+    });
+
+    await check('"Join the club" and "Register now" open the registration form in a new tab', async () => {
+      const targets = await home.$$eval(`a[href="${REGISTER}"]`, (els) => els.map((a) => a.target));
+      assert(targets.length >= 3 && targets.every((t) => t === '_blank'), `links: ${JSON.stringify(targets)}`);
+      const join = await home.$eval('#join', (el) => el.textContent.replace(/\s+/g, ' '));
+      assert(/Register now/.test(join) && !/Email us to join/.test(join), join);
+    });
+
     /* --------------------------------------------------------- admin portal */
     console.log('\nadmin portal');
     const admin = await ctx.newPage();
@@ -277,7 +354,24 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       assert(hero.includes(TITLE), 'title missing from the hero teaser');
       assert(await home.evaluate(() => window.__xss) === undefined, 'markup in the title EXECUTED on the public page');
       assert(await home.$$eval('img[src="x"]', (els) => els.length) === 0, 'markup in the title became a real element');
-      await dims(home, '#heroEvent img');
+
+      // The poster gets its own band, as large as the window allows: the full
+      // width for a landscape poster, the full height for a portrait one.
+      await home.$eval('#featured', (el) => el.scrollIntoView());
+      await dims(home, '#featuredImg');
+      const featured = await home.evaluate(() => {
+        const box = document.querySelector('#featuredImg').getBoundingClientRect();
+        return {
+          hidden: document.querySelector('#featured').classList.contains('hidden'),
+          title: document.querySelector('#featuredTitle').textContent,
+          w: Math.round(box.width), h: Math.round(box.height),
+          vw: document.documentElement.clientWidth, vh: window.innerHeight,
+        };
+      });
+      assert(!featured.hidden && featured.title === TITLE, `featured band: ${JSON.stringify(featured)}`);
+      assert(featured.w >= featured.vw * 0.8 || featured.h >= featured.vh * 0.8,
+        `poster only ${featured.w}x${featured.h} in a ${featured.vw}x${featured.vh} window`);
+
       const rels = await home.$$eval('#eventsGrid a[href="https://example.com/register"]', (els) => els.map((a) => a.rel));
       assert(rels.length && rels.every((r) => /noopener/.test(r)), `registration link rel: ${JSON.stringify(rels)}`);
       const p = await homeProblems();
@@ -404,7 +498,7 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       shown['the dashboard after a reload'] = await dims(admin, thumb);
       await home.bringToFront();
       await home.goto(`${base}/`, { waitUntil: 'networkidle0' });
-      shown['the public hero'] = await dims(home, '#heroEvent img');
+      shown['the featured poster'] = await dims(home, '#featuredImg');
       await admin.bringToFront();
 
       const stale = Object.entries(shown)
@@ -431,6 +525,146 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       assert(!p.length, p.join('\n'));
     });
 
+    await check('a programme over several days stays "on now" until its last day', async () => {
+      const start = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);
+      const end = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      await admin.bringToFront();
+      await admin.click('#newEventBtn');
+      await admin.waitForSelector('#drawer:not(.hidden)');
+      await admin.type('#title', 'E2E Programme');
+      await admin.$eval('#eventDate', (el, v) => { el.value = v; }, start);
+      await admin.$eval('#endDate', (el, v) => { el.value = v; }, end);
+      await admin.select('#mode', 'Offline');
+      await admin.$eval('#published', (el) => { el.checked = true; });
+      await admin.click('#saveBtn');
+      await toast(/Event created/);
+      await admin.waitForFunction(() => [...document.querySelectorAll('#eventList h3')].some((h) => h.textContent === 'E2E Programme'));
+      const row = await rowFor('E2E Programme');
+      assert(!/Past/.test(row.text), `started 3 days ago, yet marked past: ${row.text}`);
+
+      await home.bringToFront();
+      await home.goto(`${base}/`, { waitUntil: 'networkidle0' });
+      await gridReady(home);
+      await home.waitForFunction(() => /ON NOW · UNTIL/.test(document.querySelector('#countdown')?.textContent || ''));
+      const hero = await home.$eval('#heroEvent', (el) => el.textContent.replace(/\s+/g, ' '));
+      assert(/HAPPENING NOW/.test(hero) && hero.includes('E2E Programme'), `hero: ${hero}`);
+      const card = await home.evaluate(() => [...document.querySelectorAll('#eventsGrid article')]
+        .find((a) => a.textContent.includes('E2E Programme'))?.textContent.replace(/\s+/g, ' '));
+      assert(card && /Dates/.test(card) && /to \d{2} [A-Z][a-z]{2}/.test(card), `card: ${card}`);
+      const p = await homeProblems();
+      assert(!p.length, p.join('\n'));
+
+      await admin.bringToFront();
+      await admin.click(`#eventList [data-action="delete"][data-id="${row.id}"]`);
+      await admin.waitForSelector('#confirm:not(.hidden)');
+      await admin.click('#confirmOk');
+      await toast(/Event deleted/);
+    });
+
+    await check('FY calendar: an entry added in the dashboard appears on /calendar, as text', async () => {
+      const CAL_TITLE = 'E2E <img src=x onerror="window.__xss=1"> Orientation';
+      step('opening the calendar tab');
+      await admin.click('#tab-calendar');
+      await admin.waitForFunction(() => document.querySelectorAll('#entryList article').length >= 17);
+      step('opening the entry drawer');
+      await admin.click('#newEntryBtn');
+      await admin.waitForSelector('#calDrawer:not(.hidden)');
+      await admin.type('#entryTitle', CAL_TITLE);
+      await admin.type('#entryLabel', 'Workshop');
+      await admin.$eval('#entryStartDate', (el, v) => { el.value = v; }, future);
+      await admin.$eval('#entryStartTime', (el) => { el.value = '10:00'; });
+      await admin.$eval('#entryEndTime', (el) => { el.value = '12:30'; });
+      await admin.type('#entryDetails', 'Seminar Hall, A Wing');
+      step('saving the entry');
+      await admin.click('#calSave');
+      await toast(/added to the calendar/);
+      step('waiting for the entry in the dashboard list');
+      await admin.waitForFunction((t) => [...document.querySelectorAll('#entryList h3')].some((h) => h.textContent === t), {}, CAL_TITLE);
+
+      const page = await ctx.newPage();
+      const problems = await instrument(page, base);
+      try {
+        step('loading /calendar');
+        await page.goto(`${base}/calendar`, { waitUntil: 'networkidle0' });
+        await page.waitForFunction(() => document.querySelector('#calendarRoot').getAttribute('aria-busy') === 'false');
+        // The page opens on this academic year; switch if the entry falls in another.
+        const [y, m] = future.split('-').map(Number);
+        const year = await page.$(`#calYears [data-year="${m >= 7 ? y : y - 1}"]`);
+        if (year) await year.click();
+        const row = await page.evaluate((t) => [...document.querySelectorAll('#calendarRoot h3')]
+          .find((h) => h.textContent === t)?.closest('li').textContent.replace(/\s+/g, ' '), CAL_TITLE);
+        assert(row, 'the new entry is missing from /calendar');
+        assert(/10\.00 AM – 12\.30 PM IST/.test(row) && /Workshop/.test(row) && /Seminar Hall/.test(row), row);
+        assert(await page.evaluate(() => window.__xss) === undefined, 'markup in a calendar title EXECUTED');
+        const p = await problems();
+        assert(!p.length, p.join('\n'));
+        await shot(page, 'calendar');
+      } finally {
+        await page.close();
+      }
+
+      await admin.bringToFront();
+      step('deleting the entry');
+      const id = await admin.evaluate((t) => [...document.querySelectorAll('#entryList article')]
+        .find((a) => a.querySelector('h3').textContent === t).querySelector('[data-entry-action="delete"]').dataset.id, CAL_TITLE);
+      await admin.click(`#entryList [data-entry-action="delete"][data-id="${id}"]`);
+      await admin.waitForSelector('#confirm:not(.hidden)');
+      await admin.click('#confirmOk');
+      await toast(/Entry deleted/);
+      step('waiting for the entry to leave the list');
+      await admin.waitForFunction((t) => ![...document.querySelectorAll('#entryList h3')].some((h) => h.textContent === t), {}, CAL_TITLE);
+    });
+
+    await check('Gallery: an upload is resized in the browser, then captioned, put in the strip and deleted', async () => {
+      await admin.click('#tab-gallery');
+      await admin.waitForFunction(() => document.querySelectorAll('#photoGrid article').length >= 12);
+      const before = await admin.$$eval('#photoGrid article', (els) => els.length);
+      await (await admin.$('#photoInput')).uploadFile(BIG_PHOTO);
+      await toast(/1 photo added/);
+      await admin.waitForFunction((n) => document.querySelectorAll('#photoGrid article').length === n + 1, {}, before);
+      const id = await admin.$eval('#photoGrid article', (el) => el.dataset.photoId);   // newest leads
+
+      const stored = await admin.evaluate(async (photoId) => {
+        const { photos } = await (await fetch('/api/photos')).json();
+        const p = photos.find((x) => String(x.id) === photoId);
+        const [full, thumb] = await Promise.all([fetch(p.src), fetch(p.thumb)].map(async (r) => (await r).blob()));
+        return { w: p.width, h: p.height, full: full.size, thumb: thumb.size, type: full.type };
+      }, id);
+      assert(Math.max(stored.w, stored.h) === 1440, `a 1600px photo was stored at ${stored.w}x${stored.h}`);
+      assert(stored.type === 'image/jpeg' && stored.thumb < stored.full, JSON.stringify(stored));
+
+      const tile = `#photoGrid [data-photo-id="${id}"]`;
+      await admin.click(`${tile} [data-photo-caption]`);
+      await admin.type(`${tile} [data-photo-caption]`, 'E2E caption');
+      await admin.keyboard.press('Enter');
+      await toast(/Caption saved/);
+      await admin.click(`${tile} [data-photo-strip]`);
+      await toast(/Now in the moving strip/);
+
+      const page = await ctx.newPage();
+      const problems = await instrument(page, base);
+      try {
+        await page.goto(`${base}/`, { waitUntil: 'networkidle0' });
+        await page.waitForFunction((photoId) => [...document.querySelectorAll('#activityStrip img')]
+          .some((img) => img.getAttribute('src').startsWith(`/photos/${photoId}/thumb`)), {}, id);
+        const first = await page.$eval('#galleryGrid .js-photo', (el) => el.getAttribute('aria-label'));
+        assert(first.startsWith('E2E caption'), `first gallery photo: ${first}`);
+        const p = await problems();
+        assert(!p.length, p.join('\n'));
+      } finally {
+        await page.close();
+      }
+
+      await admin.bringToFront();
+      await admin.click(`${tile} [data-photo-delete]`);
+      await admin.waitForSelector('#confirm:not(.hidden)');
+      await admin.click('#confirmOk');
+      await toast(/Photo deleted/);
+      await admin.waitForFunction((n) => document.querySelectorAll('#photoGrid article').length === n, {}, before);
+      const p = await adminProblems();
+      assert(!p.length, p.join('\n'));
+    });
+
     await check('Sign out returns to the login page and locks the dashboard again', async () => {
       await Promise.all([admin.waitForNavigation({ waitUntil: 'networkidle0' }), admin.click('#logoutBtn')]);
       assert(admin.url().endsWith(`${TEST_ADMIN.path}/login`), `after signing out: ${admin.url()}`);
@@ -453,6 +687,29 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       const p = await problems([/HTTP 404 GET \S+\/no-such-page$/, /status of 404/]);
       await page.close();
       assert(!p.length, p.join('\n'));
+    });
+
+    await check('the FY calendar page lays the schedule out by month', async () => {
+      const page = await ctx.newPage();
+      const problems = await instrument(page, base);
+      try {
+        await page.goto(`${base}/calendar`, { waitUntil: 'networkidle0' });
+        await page.waitForFunction(() => document.querySelector('#calendarRoot').getAttribute('aria-busy') === 'false');
+        const info = await page.evaluate(() => ({
+          year: document.querySelector('#calYearTitle').textContent,
+          months: [...document.querySelectorAll('#calendarRoot h2')].map((h) => h.textContent),
+          rows: document.querySelectorAll('#calendarRoot li').length,
+          current: document.querySelector('#nav [aria-current]')?.textContent.trim(),
+        }));
+        assert(/^\d{4}–\d{2}$/.test(info.year), `year label: ${info.year}`);
+        assert(info.months.includes('October 2026') && info.months.includes('November 2026'), info.months.join(', '));
+        assert(info.rows >= 17, `${info.rows} entries`);
+        assert(info.current === 'FY Calendar', `nav marks ${info.current} as current`);
+        const p = await problems();
+        assert(!p.length, p.join('\n'));
+      } finally {
+        await page.close();
+      }
     });
 
     await check('on a 375px phone the nav menu opens and closes, with no errors', async () => {

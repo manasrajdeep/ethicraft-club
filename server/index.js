@@ -17,7 +17,11 @@ const { pool, query, migrate, ensureAdminUser, close, describeError } = require(
 const { requireAuthPage } = require('./auth');
 const adminRoutes = require('./routes/admin');
 const { router: eventRoutes } = require('./routes/events');
-const { seedIfEmpty, backfillRegistrationLink } = require('../scripts/seed');
+const { router: photoRoutes } = require('./routes/photos');
+const { router: calendarRoutes } = require('./routes/calendar');
+const {
+  seedIfEmpty, backfillRegistrationLink, seedGallery, seedCalendar,
+} = require('../scripts/seed');
 const { buildSitemap, buildRobots } = require('./seo');
 
 const app = express();
@@ -159,6 +163,7 @@ const sendPage = (name) => (_req, res) => {
 };
 
 app.get('/', sendPage('index.html'));
+app.get('/calendar', sendPage('calendar.html'));
 
 app.get(LOGIN_PATH, (req, res) => {
   if (req.session?.admin) return res.redirect(ADMIN_PATH);
@@ -201,6 +206,10 @@ app.use('/api', eventRoutes);
 // Poster bytes are served from Postgres, outside /api so they stay cacheable
 // and are not swept up by the API rate limiter.
 app.use('/', eventRoutes);
+// Gallery and calendar routers carry their full paths: /api/photos and
+// /photos/:id, /api/calendar and /api/admin/calendar.
+app.use(photoRoutes);
+app.use(calendarRoutes);
 
 /* ---------------------------------------------------------------- statics */
 
@@ -220,9 +229,8 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars -- Express needs the 4-arg signature.
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {
-    const message = err.code === 'LIMIT_FILE_SIZE'
-      ? 'Poster must be 6 MB or smaller.'
-      : `Upload failed: ${err.message}`;
+    const tooLarge = err.field === 'poster' ? 'Poster must be 6 MB or smaller.' : 'Photo must be 4 MB or smaller.';
+    const message = err.code === 'LIMIT_FILE_SIZE' ? tooLarge : `Upload failed: ${err.message}`;
     return res.status(400).json({ errors: [message] });
   }
   if (err?.message?.includes('images are allowed')) {
@@ -259,6 +267,8 @@ async function start() {
   await ensureAdminUser();
   await seedIfEmpty();
   await backfillRegistrationLink();
+  await seedGallery();
+  await seedCalendar();
 
   server = app.listen(PORT, () => {
     console.log(`\n  EthiCraft Club — ${IS_PROD ? 'production' : 'development'}`);

@@ -406,12 +406,17 @@ header, main, footer { position: relative; z-index: 2; }
   border-radius: .4rem;
 }
 
+/* Posters are shown whole, at their own shape: a fixed portrait crop cut most
+   of a landscape poster away. Very tall ones are capped and letterboxed. */
 .ec-poster {
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
+  display: block;
   width: 100%;
+  height: auto;
+  max-height: 34rem;
+  object-fit: contain;
   background: rgb(var(--surface-2));
 }
+.ec-poster-skeleton { aspect-ratio: 4 / 5; }
 
 .ec-skeleton {
   background: linear-gradient(90deg,
@@ -600,4 +605,138 @@ header, main, footer { position: relative; z-index: 2; }
 @media (prefers-reduced-motion: reduce) {
   .ec-marquee__track { animation: none; }
   .ec-row:hover { padding-left: 0; }
+}
+
+/* ============================================================
+   LOGO, PHOTOS AND POSTERS
+   ============================================================ */
+
+/* ---- Theme logos ------------------------------------------------------- */
+
+/* Both versions ship in the markup and the theme decides which shows. They are
+   background-free PNGs, so either sits cleanly on the nav and on any band. */
+:root:not([data-theme="dark"]) .ec-logo-night,
+[data-theme="dark"] .ec-logo-day { display: none !important; }
+
+/* ---- Past-activities strip --------------------------------------------- */
+
+/* The same seamless loop as the ticker: two identical tracks, each sliding by
+   its own width. Height is reserved before the photos arrive, so the page
+   below never jumps. */
+.ec-strip {
+  --strip-h: 8.5rem;
+  display: flex;
+  min-height: var(--strip-h);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+@media (min-width: 640px)  { .ec-strip { --strip-h: 11rem; } }
+@media (min-width: 1024px) { .ec-strip { --strip-h: 13rem; } }
+
+.ec-strip__track {
+  flex-shrink: 0;
+  display: flex;
+  gap: .75rem;
+  padding-right: .75rem;
+  animation: ec-marquee var(--strip-duration, 70s) linear infinite;
+}
+.ec-strip:hover .ec-strip__track,
+.ec-strip:focus-within .ec-strip__track { animation-play-state: paused; }
+
+.ec-strip__item {
+  position: relative;
+  cursor: pointer;
+  height: var(--strip-h);
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: .9rem;
+  background: rgb(255 255 255 / 6%);
+}
+.ec-strip__item img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  transition: transform .6s cubic-bezier(.22,.61,.36,1);
+}
+.ec-strip__item:hover img { transform: scale(1.05); }
+
+.no-js #activitiesBody { display: none; }
+
+/* Without motion the strip becomes a row the visitor scrolls themselves. */
+@media (prefers-reduced-motion: reduce) {
+  .ec-strip { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .ec-strip__track { animation: none; }
+  .ec-strip__track + .ec-strip__track { display: none; }
+}
+
+/* ---- Featured poster --------------------------------------------------- */
+
+/* The next session's poster as large as the window allows: a landscape poster
+   runs the full width, a portrait one the full height, whichever binds first. */
+.ec-feature-poster {
+  display: block;
+  margin-inline: auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 88vh;
+  max-height: 88svh;
+  border-radius: 1.25rem;
+}
+
+/* ---- Gallery ----------------------------------------------------------- */
+
+.ec-photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: .75rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  break-inside: avoid;
+  background: rgb(255 255 255 / 6%);
+}
+@media (min-width: 640px) { .ec-photo { margin-bottom: 1rem; } }
+.ec-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: transform .6s cubic-bezier(.22,.61,.36,1);
+}
+.ec-photo:hover img { transform: scale(1.04); }
+.ec-photo__caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2rem .9rem .75rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 70%), transparent);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(.4rem);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.ec-photo:hover .ec-photo__caption,
+.ec-photo:focus-visible .ec-photo__caption { opacity: 1; transform: none; }
+@media (hover: none) {
+  .ec-photo__caption { opacity: 1; transform: none; }
+}
+
+/* ---- Dashboard tabs ---------------------------------------------------- */
+
+.ec-admin-tab {
+  flex-shrink: 0;
+  min-height: 2.75rem;
+  padding: .75rem 1rem;
+  font-size: .875rem;
+  font-weight: 600;
+  color: rgb(var(--muted));
+  transition: color .2s ease, box-shadow .2s ease;
+}
+.ec-admin-tab:hover { color: rgb(var(--text)); }
+.ec-admin-tab[aria-selected="true"] {
+  color: rgb(var(--text));
+  box-shadow: inset 0 -2px 0 rgb(var(--brand-magenta));
 }

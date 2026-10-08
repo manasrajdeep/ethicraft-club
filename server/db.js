@@ -79,9 +79,51 @@ async function migrate() {
     -- Added after the first deploy, so CREATE TABLE alone would not reach an
     -- existing database. Idempotent: safe on every boot.
     ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_link TEXT NOT NULL DEFAULT '';
+    -- Last day of a programme that runs over several days. NULL = one day.
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS end_date DATE;
 
     CREATE INDEX IF NOT EXISTS idx_events_date      ON events (event_date);
     CREATE INDEX IF NOT EXISTS idx_events_published ON events (published);
+
+    -- Gallery photos, stored like posters for the same reason. The admin page
+    -- resizes them in the browser, so each row holds a lightbox-sized JPEG and
+    -- a thumbnail for the grid and the moving strip. The bytes never change
+    -- after upload; only the caption, strip flag and order do.
+    CREATE TABLE IF NOT EXISTS photos (
+      id          SERIAL PRIMARY KEY,
+      caption     TEXT NOT NULL DEFAULT '',
+      in_strip    BOOLEAN NOT NULL DEFAULT false,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      width       INTEGER NOT NULL,
+      height      INTEGER NOT NULL,
+      image_data  BYTEA NOT NULL,
+      thumb_data  BYTEA NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    -- The FY calendar: the year's schedule for first-year students.
+    CREATE TABLE IF NOT EXISTS calendar_entries (
+      id          SERIAL PRIMARY KEY,
+      title       TEXT NOT NULL,
+      start_date  DATE NOT NULL,
+      end_date    DATE,
+      start_time  TEXT NOT NULL DEFAULT '',
+      end_time    TEXT NOT NULL DEFAULT '',
+      label       TEXT NOT NULL DEFAULT '',
+      details     TEXT NOT NULL DEFAULT '',
+      link        TEXT NOT NULL DEFAULT '',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_calendar_start ON calendar_entries (start_date);
+
+    -- One-off markers, so starter content is inserted once and never comes
+    -- back after the club team deletes it.
+    CREATE TABLE IF NOT EXISTS app_meta (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT ''
+    );
   `);
 }
 
@@ -143,6 +185,7 @@ function rowToEvent(row) {
     subtitle: row.subtitle || '',
     description: row.description || '',
     eventDate: toISODate(row.event_date),
+    endDate: toISODate(row.end_date),
     startTime: row.start_time || '',
     endTime: row.end_time || '',
     mode: row.mode,
@@ -163,10 +206,45 @@ function rowToEvent(row) {
 
 /** Column list shared by every event SELECT: everything except the bytes. */
 const EVENT_COLUMNS = `
-  id, title, subtitle, description, event_date, start_time, end_time,
+  id, title, subtitle, description, event_date, end_date, start_time, end_time,
   mode, venue, zoom_link, registration_link, poster_type, poster_name, topics, published,
   created_at, updated_at, (poster_data IS NOT NULL) AS has_poster
 `;
+
+/** Every photo column except the bytes. */
+const PHOTO_COLUMNS = 'id, caption, in_strip, sort_order, width, height, created_at';
+
+/**
+ * A photo's bytes never change, so its URLs can be cached for good. The
+ * version is its upload time, which also keeps a reset database from serving
+ * a different photo under an id a browser has already cached.
+ */
+function rowToPhoto(row) {
+  const v = new Date(row.created_at).getTime();
+  return {
+    id: row.id,
+    caption: row.caption || '',
+    inStrip: Boolean(row.in_strip),
+    width: row.width,
+    height: row.height,
+    src: `/photos/${row.id}?v=${v}`,
+    thumb: `/photos/${row.id}/thumb?v=${v}`,
+  };
+}
+
+function rowToEntry(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    startDate: toISODate(row.start_date),
+    endDate: toISODate(row.end_date),
+    startTime: row.start_time || '',
+    endTime: row.end_time || '',
+    label: row.label || '',
+    details: row.details || '',
+    link: row.link || '',
+  };
+}
 
 async function close() {
   await pool.end();
@@ -182,4 +260,7 @@ function describeError(err) {
   return err?.code === 'ECONNREFUSED' ? `${reason} (is Postgres running?)` : reason;
 }
 
-module.exports = { pool, query, migrate, ensureAdminUser, rowToEvent, EVENT_COLUMNS, close, describeError };
+module.exports = {
+  pool, query, migrate, ensureAdminUser, close, describeError, toISODate,
+  rowToEvent, EVENT_COLUMNS, rowToPhoto, PHOTO_COLUMNS, rowToEntry,
+};

@@ -3,11 +3,14 @@
 A complete website and admin portal for the EthiCraft Club at Pune Institute of
 Computer Technology.
 
-* **Public site** — a responsive landing page covering the club's aims, the VIBE
-  and IMPACT modules, past speakers and a live **Upcoming Events** section.
+* **Public site** — a responsive landing page: a moving strip of past
+  activities, the club's aims, the VIBE and IMPACT modules, a live **Upcoming
+  Events** section with the next poster shown full size, a photo gallery and
+  past speakers. Plus an **FY Calendar** page (`/calendar`) with the year's
+  schedule for first-year students.
 * **Admin portal** — a password-protected dashboard, at a private path you
-  choose, where the club team uploads event posters, sets the date, time and
-  Zoom link, and publishes an event straight onto the public site.
+  choose, where the club team publishes events with their posters, keeps the
+  FY calendar up to date and manages the gallery photos.
 
 Built with Node.js + Express, PostgreSQL, Tailwind CSS and vanilla JavaScript.
 No framework, and the compiled stylesheet is committed — clone it and run it.
@@ -115,12 +118,15 @@ ethicraft-club/
 │   ├── db.js                # Postgres pool, schema, admin bootstrap
 │   ├── auth.js              # password checks, session guards, login throttling
 │   ├── seo.js               # robots.txt and sitemap.xml generation
+│   ├── validate.js          # date, time, URL and id checks shared by the routes
 │   └── routes/
 │       ├── admin.js         # POST /login, POST /logout, GET /me
-│       └── events.js        # public + admin event API, poster uploads
+│       ├── events.js        # public + admin event API, poster uploads
+│       ├── photos.js        # gallery API and photo bytes
+│       └── calendar.js      # FY calendar API
 │
 ├── scripts/
-│   ├── seed.js              # pre-loads the Alumni Tales event (idempotent)
+│   ├── seed.js              # starter content: launch event, gallery photos, FY calendar
 │   └── reset-db.js          # drops the app's tables and reseeds
 │
 ├── test/
@@ -136,11 +142,13 @@ ethicraft-club/
 │
 ├── src/app.css              # Tailwind entry point for npm run build
 ├── assets-seed/
-│   └── alumni-tales.jpg     # poster for the seeded launch event
+│   ├── alumni-tales.jpg     # poster for the seeded launch event
+│   └── gallery/             # photos the gallery starts with, plus manifest.json
 │
 ├── views/                   # HTML pages, served only via explicit routes
 │   ├── index.html           # public landing page
-│   ├── admin.html           # admin dashboard
+│   ├── calendar.html        # FY calendar page
+│   ├── admin.html           # admin dashboard: events, calendar, gallery
 │   ├── login.html           # admin login
 │   └── 404.html
 │
@@ -149,35 +157,57 @@ ethicraft-club/
     │   ├── app.css          # compiled Tailwind (committed)
     │   └── styles.css       # colour tokens for both themes + animations
     ├── js/
-    │   ├── main.js          # landing page: fetches and renders events
-    │   ├── admin.js         # dashboard: CRUD, uploads, publish toggle
+    │   ├── main.js          # landing page: events, poster, strip, gallery
+    │   ├── calendar.js      # FY calendar page
+    │   ├── admin.js         # dashboard: events, calendar, gallery uploads
     │   └── theme.js         # day/night toggle
     └── assets/
-        ├── logo.png         # club logo
+        ├── logo-day.png     # background-free logos, one per theme
+        ├── logo-night.png
+        ├── logo.png         # favicon and link previews
         └── hero-bg.jpg      # hero background
 ```
 
-Posters are stored in the database, not on disk (see below).
+Posters and gallery photos are stored in the database, not on disk (see below).
 
 ---
 
 ## Using the admin portal
 
-1. Go to `http://localhost:3000<ADMIN_PATH>` and sign in.
-2. Click **+ New event**.
-3. Fill in the title, tagline, date, start/end time and mode.
+Go to `http://localhost:3000<ADMIN_PATH>` and sign in. The dashboard has three
+tabs.
+
+**Events**
+
+1. Click **+ New event**.
+2. Fill in the title, tagline, start date, start/end time and mode.
+   * For a programme over several days, also set an **End date**. It stays
+     under Upcoming, and in the hero, until that day is over, so there is no
+     need to publish it again each day. The times are each day's session and
+     can be left blank.
    * **Zoom** → a meeting link is required before the event can be published.
    * **Offline / Hybrid** → a venue field appears instead.
-4. Type topics separated by commas — `Placements, Campus Life, Role of AI`.
-5. Drag a poster onto the upload box (JPG/PNG/WebP/GIF, up to 6 MB).
-6. Tick **Publish to the public site**, or leave it unticked to save a draft
+3. Type topics separated by commas — `Placements, Campus Life, Role of AI`.
+4. Drag a poster onto the upload box (JPG/PNG/WebP/GIF, up to 6 MB).
+5. Tick **Publish to the public site**, or leave it unticked to save a draft
    only the club team can see.
-7. **Save event.** Refresh the public site — it appears under Upcoming Events,
-   and the next one up is featured in the hero.
+6. **Save event.** Refresh the public site: it appears under Upcoming Events,
+   the next one up is featured in the hero, and its poster is shown full size
+   just below.
 
-Events dated in the past move automatically to the **Past** tab on the public
-site. Use **Publish / Unpublish** on any row to toggle visibility without
+Events whose last day has passed move automatically to the **Past** tab on the
+public site. Use **Publish / Unpublish** on any row to toggle visibility without
 deleting anything.
+
+**FY Calendar** — the schedule shown at `/calendar`. Each entry has a date or a
+date range, optional times, a track label such as *Wisdom Track* (each label
+keeps its own colour), details and an optional link. The page groups entries by
+academic year (July to June) and month, and marks today's entry and the next.
+
+**Gallery** — **+ Add photos**, or drag them in. Photos are resized in the
+browser before they upload, so pictures straight from a phone are fine. Give
+each one a caption, tick **Strip** to also show it in the moving strip under
+the menu, and use the arrows to set the order.
 
 ---
 
@@ -194,8 +224,9 @@ re-run.
 | `title` | TEXT | Required |
 | `subtitle` | TEXT | Tagline |
 | `description` | TEXT | Longer blurb |
-| `event_date` | DATE | |
-| `start_time`, `end_time` | TEXT | `HH:MM`, 24-hour |
+| `event_date` | DATE | First day |
+| `end_date` | DATE | Last day of a programme over several days; empty for one day |
+| `start_time`, `end_time` | TEXT | `HH:MM`, 24-hour, IST |
 | `mode` | TEXT | `Zoom` · `Offline` · `Hybrid` |
 | `venue` | TEXT | Used when the mode is not Zoom |
 | `zoom_link` | TEXT | Required to publish a Zoom event |
@@ -208,10 +239,22 @@ re-run.
 
 Posters live in the database rather than on disk, because a free Render
 instance wipes its filesystem on every restart. At this site's scale (a handful
-of posters) that keeps everything in one connection string and one free tier.
-Past roughly fifty posters, move them to Supabase Storage.
+of posters and a few dozen photos of a few hundred KB each) that keeps
+everything in one connection string and one free tier. Past a few hundred
+images, move them to Supabase Storage.
+
+**`photos`** — the gallery: `caption`, `in_strip` (also shown in the moving
+strip), `sort_order`, `width`, `height`, and two JPEGs: `image_data` (up to
+1440px, for the lightbox) and `thumb_data` (up to 720px, for the grid and strip).
+
+**`calendar_entries`** — the FY calendar: `title`, `start_date`, `end_date`,
+`start_time`, `end_time`, `label`, `details`, `link`.
+
+**`app_meta`** — one-off markers, so the starter gallery and calendar are
+inserted once and stay deleted if the club team removes them.
 
 **`admins`** — `id`, `username`, `password_hash` (bcrypt, 12 rounds), `created_at`.
+Only the account named by `ADMIN_USERNAME` is kept.
 **`user_sessions`** — created automatically by `connect-pg-simple`.
 
 ---
@@ -225,6 +268,9 @@ Past roughly fifty posters, move them to Supabase Storage.
 | `GET` | `/api/events?scope=upcoming\|past\|all` | Published events only |
 | `GET` | `/api/events/:id` | One published event |
 | `GET` | `/posters/:id` | An event's poster image (cached, ETag). Link it with the event's `posterPath`, whose `?v=` changes whenever the poster does, so browsers never show a replaced poster from cache. |
+| `GET` | `/api/photos` | Gallery photos in order, with captions, sizes, strip flags and image URLs |
+| `GET` | `/photos/:id`, `/photos/:id/thumb` | A photo, or its thumbnail. Cached for a year at the versioned URLs `/api/photos` hands out. |
+| `GET` | `/api/calendar` | The FY calendar, earliest first |
 
 ### Admin — all require a valid session cookie
 
@@ -235,10 +281,16 @@ Past roughly fifty posters, move them to Supabase Storage.
 | `GET` | `/api/admin/me` | Current admin |
 | `GET` | `/api/admin/events` | All events, drafts included |
 | `GET` | `/api/admin/events/:id` | One event, drafts included |
-| `POST` | `/api/admin/events` | Create — `multipart/form-data`, optional `poster` |
+| `POST` | `/api/admin/events` | Create — `multipart/form-data`, optional `poster` and `endDate` |
 | `PUT` | `/api/admin/events/:id` | Update — send `removePoster=1` to clear a poster |
 | `PATCH` | `/api/admin/events/:id/publish` | `{ published: true \| false }` |
 | `DELETE` | `/api/admin/events/:id` | Deletes the event and its poster |
+| `POST` | `/api/admin/photos` | Add a photo — `multipart/form-data` with `photo` and `thumb` JPEGs, optional `caption` and `inStrip` |
+| `PATCH` | `/api/admin/photos/:id` | `{ caption?, inStrip?, move?: "up" \| "down" }` |
+| `DELETE` | `/api/admin/photos/:id` | Removes a photo |
+| `POST` | `/api/admin/calendar` | Add an entry — JSON `{ title, startDate, endDate?, startTime?, endTime?, label?, details?, link? }` |
+| `PUT` | `/api/admin/calendar/:id` | Replace an entry (same body) |
+| `DELETE` | `/api/admin/calendar/:id` | Removes an entry |
 
 Validation errors come back as `400` with `{ "errors": ["...", "..."] }`.
 
@@ -252,7 +304,7 @@ Validation errors come back as `400` with `{ "errors": ["...", "..."] }`.
 | `npm run dev` | Start with `--watch` (restarts on save) |
 | `npm run build` | Compile Tailwind into `public/css/app.css` (`build:watch` while editing) |
 | `npm run seed` | Seed the initial event if the table is empty |
-| `npm run reset-db` | **Deletes** every event, admin and session, then reseeds |
+| `npm run reset-db` | **Deletes** every event, admin, session, photo and calendar entry, then reseeds |
 | `npm test` | Runs the full integration suite |
 | `npm run test:watch` | Same, re-running on file changes |
 | `npm run test:responsive` | Drives a real browser across 11 device viewports |
@@ -303,7 +355,12 @@ npm run build          # or: npm run build:watch while editing
 ```
 
 **Content** — the aims, modules, entry criteria and speakers are plain HTML in
-`views/index.html`, marked with comments. Edit them directly.
+`views/index.html`, marked with comments. Edit them directly. Events, the FY
+calendar and the gallery are managed from the dashboard instead.
+
+**Logo** — `public/assets/logo-day.png` and `logo-night.png` have no background,
+so they sit cleanly on any band; the page shows the one that matches the theme.
+Replace both together, as square PNGs with transparency.
 
 **Why `views/` is separate from `public/`** — `public/` is served by
 `express.static`, so anything in it is reachable by anyone. Keeping the HTML in
@@ -337,15 +394,17 @@ dropped per run) and runs integration tests across twelve areas:
 infrastructure, security headers, admin portal location, authentication, the
 public API, validation, poster uploads, attack surface (path traversal, SQL
 injection, stored XSS, oversized bodies, brute force), SEO output, frontend
-assets, theming and responsive rules. It needs a local Postgres your user can
-create databases in; set `TEST_PG_URL` to use another (CI does).
+assets, theming and responsive rules, plus multi-day events, the gallery and
+FY calendar APIs, and starter content that is seeded only once. It needs a
+local Postgres your user can create databases in; set `TEST_PG_URL` to use
+another (CI does).
 
 ```bash
 npm run test:responsive
 ```
 
 Drives a real Chromium across 11 device viewports (320px Galaxy Fold through
-1920px desktop) on three pages, failing on horizontal overflow, elements that
+1920px desktop) on four pages, failing on horizontal overflow, elements that
 escape the viewport, tap targets under 24px, and text under 11px. It boots its
 own throwaway server. To audit one that is already running, pass its URL, then
 its login page (left out otherwise, since the admin path is secret):
@@ -357,11 +416,13 @@ npm run test:e2e
 
 Drives the real site and dashboard in headless Chromium against a throwaway
 server: signs in, then creates, edits, unpublishes, republishes and deletes an
-event with a poster, failing on any console error, CSP violation or failed
-request along the way. It also checks what only a browser can show: that
-markup in an event title stays text, that a replaced poster is never served
-stale from the browser cache, and that the countdown and `.ics` export match
-the real start time for visitors in other timezones.
+event with a poster, adds a multi-day programme, a calendar entry and a gallery
+photo, failing on any console error, CSP violation or failed request along the
+way. It also checks what only a browser can show: that markup in a title stays
+text, that a replaced poster is never served stale from the browser cache, that
+the countdown and `.ics` export match the real start time for visitors in other
+timezones, that uploads are resized before they leave the browser, and that the
+logo, moving strip and lightbox behave.
 
 Screenshots from both browser runs are saved under `.audit-shots/`.
 

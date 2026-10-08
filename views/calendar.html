@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>FY Calendar | EthiCraft Club PICT</title>
+<meta name="description" content="The EthiCraft Club PICT schedule for first-year students at Pune Institute of Computer Technology: every Wisdom Track and Technical Track session, with dates, times and the divisions attending." />
+<link rel="canonical" href="https://ethicraft.in/calendar" />
+<meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
+<link rel="icon" href="/assets/logo.png" />
+<link rel="apple-touch-icon" href="/assets/logo.png" />
+
+<meta property="og:site_name" content="EthiCraft Club PICT" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_IN" />
+<meta property="og:url" content="https://ethicraft.in/calendar" />
+<meta property="og:title" content="FY Calendar | EthiCraft Club PICT" />
+<meta property="og:description" content="Every EthiCraft session for PICT first-year students, with dates, times and divisions." />
+<meta property="og:image" content="https://ethicraft.in/assets/logo.png" />
+
+<script>
+  // Runs before first paint: a dark-mode visitor must never see a white flash.
+  // Deliberately inline and synchronous - an external file would load too late.
+  // Resolution order: the visitor's own saved choice, else their OS setting.
+  (() => {
+    try {
+      const saved = localStorage.getItem('ethicraft-theme');
+      const theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch {
+      // Storage or matchMedia unavailable (Safari private mode): fall back to light.
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="antialiased no-js">
+<script>
+  // Removed immediately when scripting is available; the `no-js` class keeps
+  // scroll-reveal content visible for anyone browsing without JavaScript.
+  document.body.classList.remove('no-js');
+</script>
+
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:m-3 focus:rounded-lg focus:bg-deep focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
+
+<div id="scrollProgress" class="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0"
+     style="background:linear-gradient(90deg,rgb(var(--brand-amber)),rgb(var(--brand-magenta)) 50%,rgb(var(--brand-sky)))"
+     aria-hidden="true"></div>
+
+<!-- ======================================================= NAVIGATION -->
+<!-- The homepage's nav, pointing back at its sections. -->
+<header id="nav" class="ec-nav fixed inset-x-0 top-0 z-50">
+  <nav class="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-3.5 lg:px-10" aria-label="Main">
+    <a href="/" class="flex items-center gap-3">
+      <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-11 w-11 shrink-0" width="44" height="44" />
+      <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-11 w-11 shrink-0" width="44" height="44" />
+      <span class="leading-none">
+        <span class="ec-nav-ink block font-display text-[1.35rem] font-bold tracking-tight text-ink">EthiCraft</span>
+        <span class="ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
+      </span>
+    </a>
+
+    <div class="hidden items-center gap-6 text-sm font-semibold text-ink/75 lg:flex xl:gap-8">
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/#about">Charter</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/#modules">Modules</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/#events">Events</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/#gallery">Gallery</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/calendar" aria-current="true">FY Calendar</a>
+      <a class="ec-navlink ec-nav-ink-soft hover:text-ink" href="/#speakers">Mentors</a>
+      <a href="https://tinyurl.com/ethicraftpict" target="_blank" rel="noopener noreferrer"
+         class="rounded-full bg-amber-brand px-5 py-2.5 font-bold text-deep2 shadow-sm transition hover:brightness-110">Join the club</a>
+      <button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+        <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 lg:hidden">
+      <button type="button" data-theme-toggle class="ec-theme-toggle" aria-pressed="false" aria-label="Toggle day and night mode" title="Switch to night mode">
+        <svg class="ec-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="ec-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button id="navToggle" type="button" class="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface/70 text-ink"
+              aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+        <svg id="navIconOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <svg id="navIconClose" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="mobileMenu" class="hidden border-t border-line bg-bg/95 px-5 py-4 backdrop-blur lg:hidden">
+    <div class="flex flex-col gap-1 text-sm font-semibold text-ink">
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="/#about">Charter</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="/#modules">Modules</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="/#events">Events</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="/#gallery">Gallery</a>
+      <a class="rounded-lg bg-surface px-3 py-2.5" href="/calendar" aria-current="page">FY Calendar</a>
+      <a class="rounded-lg px-3 py-2.5 hover:bg-surface" href="/#speakers">Mentors</a>
+      <a class="mt-1 rounded-lg bg-amber-brand px-3 py-2.5 text-center font-bold text-deep2" href="https://tinyurl.com/ethicraftpict"
+         target="_blank" rel="noopener noreferrer">Join the club</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============================================================= HEADER -->
+<section class="relative overflow-hidden bg-deep2 pb-14 pt-32 text-white sm:pb-20 sm:pt-40">
+  <div class="ec-mesh" aria-hidden="true"></div>
+  <div class="ec-blob h-72 w-72 bg-magenta-brand" style="top:-5rem; right:8%; opacity:.25;"></div>
+
+  <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
+    <p class="ec-label flex items-center gap-2 text-amber-brand">
+      <span class="ec-status text-amber-brand"></span> ETHICRAFT PICT · FIRST YEAR
+    </p>
+    <h1 class="mt-6 font-display font-black tracking-[-0.03em]" style="font-size:clamp(2.75rem,7vw,5.5rem); line-height:.95">
+      FY Calendar <span id="calYearTitle" class="ec-gradient-text"></span>
+    </h1>
+    <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ondeep/75">
+      Every session the club runs for first-year students this year, with times in IST and the
+      divisions attending. Kept up to date by the club team.
+    </p>
+
+    <div class="mt-9 flex flex-wrap items-center gap-3">
+      <a href="https://tinyurl.com/ethicraftpict" target="_blank" rel="noopener noreferrer"
+         class="inline-flex items-center gap-2 rounded-full bg-amber-brand px-7 py-3.5 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
+        Register now
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      </a>
+      <div id="calYears" class="flex flex-wrap gap-2" role="tablist" aria-label="Academic year"></div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== SCHEDULE -->
+<section class="relative bg-bg py-14 sm:py-20">
+  <div class="ec-grid-bg pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div class="relative mx-auto max-w-5xl px-5 lg:px-10">
+    <div id="calendarRoot" aria-live="polite" aria-busy="true">
+      <div class="ec-skeleton h-24 rounded-2xl"></div>
+      <div class="ec-skeleton mt-3 h-24 rounded-2xl"></div>
+      <div class="ec-skeleton mt-3 h-24 rounded-2xl"></div>
+    </div>
+    <noscript>
+      <p class="rounded-2xl bg-surface px-6 py-10 text-center text-muted ring-1 ring-line">
+        The calendar needs JavaScript. You can also email ethicraft.pict25@gmail.com for the schedule.
+      </p>
+    </noscript>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================= FOOTER -->
+<footer class="border-t border-white/10 bg-deep py-12 text-ondeep/60">
+  <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
+    <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+      <div class="flex items-center gap-3">
+        <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-9 w-9" width="36" height="36" />
+        <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-9 w-9" width="36" height="36" />
+        <span class="text-sm">The EthiCraft Club · Pune Institute of Computer Technology, Pune</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 text-sm">
+        <a class="ec-taplink transition hover:text-ondeep" href="/#about">Charter</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="/#events">Events</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="/#gallery">Gallery</a>
+        <a class="ec-taplink transition hover:text-ondeep" href="mailto:ethicraft.pict25@gmail.com">Contact</a>
+      </div>
+    </div>
+
+    <div class="ec-ticks mt-9 text-white"></div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <span class="ec-label text-ondeep/30">LEARN · CONNECT · GROW</span>
+      <span class="ec-label text-ondeep/30">ALL TIMES IN IST (UTC+05:30)</span>
+      <span id="buildMeta" class="ec-label text-ondeep/30"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/theme.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/calendar.js"></script>
+</body>
+</html>

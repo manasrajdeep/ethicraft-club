@@ -1,5 +1,7 @@
 /* EthiCraft Club — public site behaviour.
-   Plain ES2020, no build step. Everything dynamic comes from /api/events. */
+   Plain ES2020, no build step. Everything dynamic comes from /api/events and
+   /api/photos. Every lookup tolerates a missing element, so the calendar page
+   can load this file for its nav, theme and reveals. */
 (() => {
   'use strict';
 
@@ -14,6 +16,15 @@
   ));
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTHS_LONG = ['January','February','March','April','May','June','July','August',
+    'September','October','November','December'];
+
+  const arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    + 'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+
+  /** Both logos; the theme shows one (see .ec-logo-day in styles.css). */
+  const logo = (cls) => `<img src="/assets/logo-day.png" alt="" class="ec-logo-day ${cls}" />`
+    + `<img src="/assets/logo-night.png" alt="" class="ec-logo-night ${cls}" />`;
 
   /** '2026-09-16' -> { day: '16', month: 'Sep', weekday: 'Wednesday', full: '16 Sept 2026' } */
   function formatDate(iso) {
@@ -26,6 +37,25 @@
       weekday: date.toLocaleDateString('en-IN', { weekday: 'long' }),
       full: date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
     };
+  }
+
+  /** The last day of an event: its end date, or its only date. */
+  const lastDay = (event) => event.endDate || event.eventDate;
+  const isMultiDay = (event) => Boolean(event.endDate) && event.endDate !== event.eventDate;
+
+  /**
+   * '12–22 Oct 2026', '12 Oct – 7 Nov 2026', or for one day '16 Sep 2026'.
+   * `long` spells the months out.
+   */
+  function formatRange(event, long = false) {
+    const names = long ? MONTHS_LONG : MONTHS;
+    const [y1, m1, d1] = String(event.eventDate).split('-').map(Number);
+    if (!y1) return event.eventDate || '';
+    if (!isMultiDay(event)) return `${d1} ${names[m1 - 1]} ${y1}`;
+    const [y2, m2, d2] = String(event.endDate).split('-').map(Number);
+    if (y1 !== y2) return `${d1} ${names[m1 - 1]} ${y1} – ${d2} ${names[m2 - 1]} ${y2}`;
+    if (m1 !== m2) return `${d1} ${names[m1 - 1]} – ${d2} ${names[m2 - 1]} ${y1}`;
+    return `${d1}–${d2} ${names[m1 - 1]} ${y1}`;
   }
 
   /** '19:30' -> '7.30 pm' (the format the club uses on its posters). */
@@ -42,7 +72,8 @@
     const start = formatTime(event.startTime);
     const end = formatTime(event.endTime);
     if (start && end) return `${start} – ${end}`;
-    return start || end || 'Time to be announced';
+    if (start || end) return start || end;
+    return isMultiDay(event) ? 'Multiple sessions' : 'Time to be announced';
   }
 
   /**
@@ -65,11 +96,18 @@
     return istDate(event.eventDate, event.startTime);
   }
 
+  /**
+   * When an event is over. Without times it lasts to the end of its last day:
+   * ending an hour after midnight marked a date-only session "concluded" on
+   * the very day it was happening.
+   */
   function eventEnd(event) {
     const start = eventStart(event);
     if (!start) return null;
-    if (!event.endTime) return new Date(start.getTime() + 60 * 60 * 1000);
-    return istDate(event.eventDate, event.endTime);
+    if (event.endTime) return istDate(lastDay(event), event.endTime);
+    if (event.startTime && !isMultiDay(event)) return new Date(start.getTime() + 60 * 60 * 1000);
+    const endOfDay = istDate(lastDay(event), '23:59');
+    return endOfDay && new Date(endOfDay.getTime() + 59 * 1000);
   }
 
   /** RFC 5545 escaping: commas, semicolons, backslashes and newlines. */
@@ -78,17 +116,36 @@
 
   const icsStamp = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
-  /** Builds a downloadable .ics file so members can drop the session into a calendar. */
+  /** The day after an ISO date, for an all-day event's exclusive end. */
+  function nextDay(iso) {
+    const date = new Date(`${iso}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + 1);
+    return date.toISOString().slice(0, 10);
+  }
+
+  /**
+   * Builds a downloadable .ics file so members can drop the session into a
+   * calendar. A programme over several days, or a day without a start time,
+   * becomes an all-day entry, with any session times in its description.
+   */
   function buildIcs(event) {
     const start = eventStart(event);
     const end = eventEnd(event);
     if (!start || !end) return null;
 
+    const allDay = !event.startTime || isMultiDay(event);
+    const when = allDay
+      ? [`DTSTART;VALUE=DATE:${event.eventDate.replace(/-/g, '')}`,
+        `DTEND;VALUE=DATE:${nextDay(lastDay(event)).replace(/-/g, '')}`]
+      : [`DTSTART:${icsStamp(start)}`, `DTEND:${icsStamp(end)}`];
+
     const where = event.mode === 'Zoom' ? (event.zoomLink || 'Zoom') : (event.venue || event.mode);
     const body = [
       event.subtitle,
       event.description,
+      allDay && event.startTime ? `Sessions: ${timeRange(event)} IST` : '',
       event.topics?.length ? `Topics: ${event.topics.join(', ')}` : '',
+      event.registrationLink ? `Register: ${event.registrationLink}` : '',
       event.zoomLink ? `Join: ${event.zoomLink}` : '',
     ].filter(Boolean).join('\n\n');
 
@@ -102,8 +159,7 @@
       'BEGIN:VEVENT',
       `UID:ethicraft-${event.id}@pict.edu`,
       `DTSTAMP:${icsStamp(new Date())}`,
-      `DTSTART:${icsStamp(start)}`,
-      `DTEND:${icsStamp(end)}`,
+      ...when,
       `SUMMARY:${icsEscape(event.title)}`,
       `DESCRIPTION:${icsEscape(body)}`,
       `LOCATION:${icsEscape(where)}`,
@@ -190,6 +246,7 @@
 
   function eventCard(event, { isPast }) {
     const date = formatDate(event.eventDate);
+    const until = isMultiDay(event) ? formatDate(event.endDate) : null;
     const modeClass = MODE_STYLES[event.mode] || MODE_STYLES.Zoom;
 
     const poster = event.posterPath
@@ -202,11 +259,8 @@
            </span>
          </button>`
       : `<div class="grid h-40 place-items-center rounded-t-2xl bg-gradient-to-br from-deep to-sky-dark">
-           <img src="/assets/logo.png" alt="" class="h-16 w-16 opacity-90" />
+           ${logo('h-16 w-16 opacity-90')}
          </div>`;
-
-    const arrow = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-      + 'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
 
     // Registering comes before joining, so it leads. Once an event is past,
     // both links are dropped rather than left to disappoint.
@@ -238,6 +292,7 @@
             <div class="shrink-0 rounded-xl bg-surface2 px-3 py-2 text-center">
               <span class="block font-display text-2xl font-black leading-none text-ink">${date.day}</span>
               <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-brand">${date.month}</span>
+              ${until ? `<span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-ink/50">to ${until.day} ${until.month}</span>` : ''}
             </div>
             <div class="min-w-0">
               <span class="ec-chip ${modeClass}">${esc(event.mode)}</span>
@@ -250,13 +305,13 @@
           ${topicPills(event.topics)}
 
           <dl class="mt-5 space-y-2 border-t border-line pt-4 text-ink/80">
-            ${specRow('Date', `${date.day} ${date.month} ${esc(String(event.eventDate).slice(0, 4))}`)}
+            ${specRow(until ? 'Dates' : 'Date', formatRange(event))}
             ${specRow('Time', timeRange(event))}
             ${specRow('Venue', locationLabel(event))}
             ${specRow('Ref', `EC-${String(event.id).padStart(3, '0')}`)}
           </dl>
 
-          <div class="mt-auto flex flex-wrap items-center gap-2">
+          <div class="mt-auto flex flex-wrap items-center gap-2 pt-5">
             ${action}
             ${isPast ? '' : `<button type="button" class="js-ics ec-label rounded-full border border-line px-4 py-2.5 text-ink/70 transition hover:border-sky-brand hover:text-ink" data-id="${event.id}">+ .ICS</button>`}
           </div>
@@ -270,7 +325,7 @@
       : { title: 'Nothing scheduled right now', body: 'New sessions go up regularly — check back soon or email us to be notified.' };
     return `
       <div class="col-span-full rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-        <img src="/assets/logo.png" alt="" class="mx-auto h-14 w-14 opacity-40" />
+        ${logo('mx-auto h-14 w-14 opacity-40')}
         <h3 class="mt-4 font-display text-xl font-bold">${copy.title}</h3>
         <p class="mx-auto mt-2 max-w-sm text-sm text-muted">${copy.body}</p>
       </div>`;
@@ -278,15 +333,13 @@
 
   const skeletons = (n = 3) => Array.from({ length: n }, () => `
     <div class="ec-card overflow-hidden">
-      <div class="ec-skeleton ec-poster"></div>
+      <div class="ec-skeleton ec-poster-skeleton"></div>
       <div class="space-y-3 p-6">
         <div class="ec-skeleton h-5 w-2/3 rounded"></div>
         <div class="ec-skeleton h-3.5 w-full rounded"></div>
         <div class="ec-skeleton h-3.5 w-4/5 rounded"></div>
       </div>
     </div>`).join('');
-
-  /* --------------------------------------------------------- hero teaser */
 
   /* ------------------------------------------------------------ countdown */
 
@@ -301,6 +354,15 @@
       minutes: String(Math.floor((total % 3600) / 60)).padStart(2, '0'),
       seconds: String(total % 60).padStart(2, '0'),
     };
+  }
+
+  /** What is happening now, in the hero's small caps. */
+  function nowLabel(event) {
+    if (isMultiDay(event)) {
+      const until = formatDate(event.endDate);
+      return `ON NOW · UNTIL ${until.day} ${until.month.toUpperCase()}`;
+    }
+    return event.startTime ? 'LIVE NOW' : 'HAPPENING TODAY';
   }
 
   /**
@@ -329,14 +391,14 @@
       const now = Date.now();
 
       if (now >= end.getTime()) {
-        host.innerHTML = `<p class="ec-label text-ondeep/50">SESSION CONCLUDED</p>`;
+        host.innerHTML = `<p class="ec-label text-ondeep/50">${isMultiDay(event) ? 'PROGRAMME CONCLUDED' : 'SESSION CONCLUDED'}</p>`;
         clearInterval(countdownTimer);
         return;
       }
       if (now >= start.getTime()) {
         host.innerHTML = `
           <p class="ec-label flex items-center gap-2 text-amber-brand">
-            <span class="ec-status text-amber-brand"></span> LIVE NOW
+            <span class="ec-status text-amber-brand"></span> ${nowLabel(event)}
           </p>`;
         return;   // keep ticking so it flips to concluded at the end time
       }
@@ -374,31 +436,37 @@
       </span>`).join('');
   }
 
+  /* --------------------------------------------------------- hero teaser */
+
+  /** Under way already: an ongoing programme leads with that, not "next". */
+  const isUnderway = (event) => {
+    const start = eventStart(event);
+    return Boolean(start) && Date.now() >= start.getTime();
+  };
+
+  /**
+   * The hero card carries the details and the countdown. The poster itself is
+   * shown full size in its own band just below, so it is not repeated here.
+   */
   function renderHeroEvent(event) {
     const host = $('#heroEvent');
     if (!host) return;
     if (!event) { host.innerHTML = ''; return; }
 
-    const date = formatDate(event.eventDate);
+    const kicker = isUnderway(event) ? 'HAPPENING NOW' : 'NEXT SESSION';
     host.innerHTML = `
       <div class="w-full max-w-md rounded-3xl bg-white/[0.08] p-2 ring-1 ring-inset ring-white/20 backdrop-blur-md">
-        ${event.posterPath
-          ? `<button type="button" class="js-poster block w-full overflow-hidden rounded-[1.25rem]"
-                     data-src="${esc(event.posterPath)}" data-title="${esc(event.title)}">
-               <img src="${esc(event.posterPath)}" alt="Poster for ${esc(event.title)}" class="w-full rounded-[1.25rem]" />
-             </button>`
-          : ''}
         <div class="p-5">
           <div class="flex items-center justify-between gap-3">
             <span class="ec-label flex items-center gap-2 text-amber-brand">
-              <span class="ec-status text-amber-brand"></span> NEXT SESSION
+              <span class="ec-status text-amber-brand"></span> ${kicker}
             </span>
             <span class="ec-label text-ondeep/35">EC-${String(event.id).padStart(3, '0')}</span>
           </div>
 
           <h2 class="mt-3 font-display text-2xl font-bold leading-snug text-white">${esc(event.title)}</h2>
           <p class="ec-label mt-2 text-ondeep/55">
-            ${esc(date.full.toUpperCase())} · ${esc(timeRange(event).toUpperCase())} · ${esc((event.mode === 'Zoom' ? 'Zoom' : locationLabel(event)).toUpperCase())}
+            ${esc(formatRange(event, true).toUpperCase())} · ${esc(timeRange(event).toUpperCase())} · ${esc((event.mode === 'Zoom' ? 'Zoom' : locationLabel(event)).toUpperCase())}
           </p>
 
           <div id="countdown" class="mt-5" aria-live="off"></div>
@@ -406,8 +474,7 @@
           ${event.registrationLink ? `
             <a href="${esc(event.registrationLink)}" target="_blank" rel="noopener noreferrer"
                class="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-amber-brand px-5 py-3.5 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
-              Register now
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+              Register now ${arrow}
             </a>` : ''}
 
           <div class="mt-3 flex gap-2">
@@ -415,6 +482,10 @@
               <a href="${esc(event.zoomLink)}" target="_blank" rel="noopener noreferrer"
                  class="flex-1 rounded-full ${event.registrationLink ? 'border border-white/25 text-white hover:bg-white/10' : 'bg-white text-deep2 hover:bg-amber-brand'} px-5 py-3 text-center text-sm font-bold transition">
                 Join on Zoom
+              </a>` : ''}
+            ${event.posterPath ? `
+              <a href="#featured" class="ec-label flex-1 rounded-full border border-white/25 px-4 py-3 text-center text-white/75 transition hover:border-white hover:text-white">
+                SEE POSTER ↓
               </a>` : ''}
             <button type="button" class="js-ics ec-label rounded-full border border-white/25 px-4 py-3 text-white/75 transition hover:border-white hover:text-white" data-id="${event.id}">
               + .ICS
@@ -425,11 +496,44 @@
     observeReveals(host);
   }
 
+  /* ---------------------------------------------------- featured poster */
+
+  /** The next session's poster in its own band, as large as the window allows. */
+  function renderFeatured(event) {
+    const section = $('#featured');
+    if (!section) return;
+    if (!event?.posterPath) { section.classList.add('hidden'); return; }
+
+    $('#featuredKicker').innerHTML = `<span class="ec-status text-amber-brand"></span> ${isUnderway(event) ? 'HAPPENING NOW' : 'NEXT SESSION'}`;
+    $('#featuredTitle').textContent = event.title;
+    $('#featuredMeta').textContent = [formatRange(event, true), timeRange(event), locationLabel(event)]
+      .join(' · ').toUpperCase();
+    $('#featuredActions').innerHTML = `
+      ${event.registrationLink ? `
+        <a href="${esc(event.registrationLink)}" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 rounded-full bg-amber-brand px-6 py-3 text-sm font-bold text-deep2 shadow-lg transition hover:brightness-110">
+          Register now ${arrow}
+        </a>` : ''}
+      <button type="button" class="js-ics ec-label rounded-full border border-white/25 px-4 py-3 text-white/75 transition hover:border-white hover:text-white" data-id="${event.id}">
+        + .ICS
+      </button>`;
+
+    const button = $('#featuredPoster');
+    button.dataset.src = event.posterPath;
+    button.dataset.title = event.title;
+    button.setAttribute('aria-label', `View the poster for ${event.title} full screen`);
+    const img = $('#featuredImg');
+    img.src = event.posterPath;
+    img.alt = `Poster for ${event.title}`;
+    section.classList.remove('hidden');
+  }
+
   /* ------------------------------------------------------------- loading */
 
   const grid = $('#eventsGrid');
   let activeScope = 'upcoming';
   let loadedEvents = [];      // backs the .ics buttons
+  let featured = null;        // the hero's event, which outlives a switch to "Past"
 
   function paintTabs() {
     $$('.ec-tab').forEach((tab) => {
@@ -461,8 +565,10 @@
         : emptyState(scope);
 
       if (scope === 'upcoming') {
-        renderHeroEvent(events[0] || null);
-        startCountdown(events[0] || null);
+        featured = events[0] || null;
+        renderHeroEvent(featured);
+        startCountdown(featured);
+        renderFeatured(featured);
       }
       observeReveals(grid);
     } catch (err) {
@@ -477,6 +583,77 @@
     } finally {
       grid.setAttribute('aria-busy', 'false');
     }
+  }
+
+  /* -------------------------------------------------------------- photos */
+
+  let photos = [];        // every gallery photo, in order
+  let stripPhotos = [];   // the ones picked for the moving strip
+
+  const photoItem = (p) => ({ src: p.src, alt: p.caption || 'A photo from the EthiCraft Club', caption: p.caption });
+
+  /**
+   * The strip under the nav. Two identical tracks loop seamlessly; a short
+   * selection is repeated so the loop never shows a gap on a wide screen. The
+   * photos are not tab stops: keyboard users get the same set in the gallery,
+   * which the strip's own link points to.
+   */
+  function renderStrip() {
+    const host = $('#activityStrip');
+    if (!host) return;
+    host.setAttribute('aria-busy', 'false');
+    stripPhotos = photos.filter((p) => p.inStrip);
+    if (!stripPhotos.length) {
+      $('#activitiesBody')?.classList.add('hidden');
+      return;
+    }
+
+    const items = [];
+    while (items.length < 12) items.push(...stripPhotos);
+    const track = (copy) => `
+      <div class="ec-strip__track" aria-hidden="true">
+        ${items.map((p, i) => `
+          <span class="ec-strip__item js-photo" data-set="strip" data-index="${i % stripPhotos.length}">
+            <img src="${esc(p.thumb)}" alt="" width="${Number(p.width)}" height="${Number(p.height)}"
+                 ${copy ? 'loading="lazy"' : i < 6 ? '' : 'loading="lazy"'} decoding="async" />
+          </span>`).join('')}
+      </div>`;
+    host.innerHTML = track(false) + track(true);
+
+    // A steady pace whatever the number of photos: about 40px a second.
+    const width = host.firstElementChild.getBoundingClientRect().width;
+    host.style.setProperty('--strip-duration', `${Math.max(30, Math.round(width / 40))}s`);
+  }
+
+  function renderGallery() {
+    const host = $('#galleryGrid');
+    if (!host) return;
+    if (!photos.length) {
+      $('#gallery')?.classList.add('hidden');
+      return;
+    }
+    host.innerHTML = photos.map((p, i) => `
+      <button type="button" class="ec-photo ec-reveal js-photo" data-set="gallery" data-index="${i}"
+              aria-label="${esc(p.caption || 'Club photo')}: view larger">
+        <img src="${esc(p.thumb)}" alt="${esc(p.caption)}" width="${Number(p.width)}" height="${Number(p.height)}"
+             loading="lazy" decoding="async" />
+        ${p.caption ? `<span class="ec-photo__caption" aria-hidden="true">${esc(p.caption)}</span>` : ''}
+      </button>`).join('');
+    observeReveals(host);
+  }
+
+  async function loadPhotos() {
+    if (!$('#activityStrip') && !$('#galleryGrid')) return;
+    try {
+      const res = await fetch('/api/photos', { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      ({ photos } = await res.json());
+    } catch (err) {
+      console.error(err);
+      photos = [];
+    }
+    renderStrip();
+    renderGallery();
   }
 
   /* -------------------------------------------------------------- reveal */
@@ -526,11 +703,35 @@
 
   const lightbox = $('#lightbox');
   const lightboxImg = $('#lightboxImg');
+  const lightboxCaption = $('#lightboxCaption');
+  let lightboxItems = [];
+  let lightboxIndex = 0;
+  let lightboxReturn = null;   // what had focus, to hand it back on close
 
-  function openLightbox(src, title) {
-    if (!lightbox) return;
-    lightboxImg.src = src;
-    lightboxImg.alt = `Poster for ${title}`;
+  function showLightboxItem(index) {
+    const count = lightboxItems.length;
+    lightboxIndex = (index + count) % count;
+    const item = lightboxItems[lightboxIndex];
+    lightboxImg.src = item.src;
+    lightboxImg.alt = item.alt;
+    const many = count > 1;
+    if (lightboxCaption) {
+      lightboxCaption.textContent = [item.caption, many ? `${lightboxIndex + 1} / ${count}` : '']
+        .filter(Boolean).join('  ·  ');
+    }
+    for (const id of ['#lightboxPrev', '#lightboxNext']) {
+      $(id)?.classList.toggle('hidden', !many);
+      $(id)?.classList.toggle('grid', many);
+    }
+    // Warm the cache for the next photo, so stepping through never waits.
+    if (many) new Image().src = lightboxItems[(lightboxIndex + 1) % count].src;
+  }
+
+  function openLightbox(items, index = 0, trigger = null) {
+    if (!lightbox || !items.length) return;
+    lightboxItems = items;
+    lightboxReturn = trigger;
+    showLightboxItem(index);
     lightbox.classList.remove('hidden');
     lightbox.classList.add('flex');
     document.body.style.overflow = 'hidden';
@@ -538,29 +739,60 @@
   }
 
   function closeLightbox() {
-    if (!lightbox) return;
+    if (!lightbox || lightbox.classList.contains('hidden')) return;
     lightbox.classList.add('hidden');
     lightbox.classList.remove('flex');
     lightboxImg.src = '';
     document.body.style.overflow = '';
+    lightboxReturn?.focus?.();
   }
+
+  const lightboxOpen = () => lightbox && !lightbox.classList.contains('hidden');
 
   document.addEventListener('click', (e) => {
     const ics = e.target.closest('.js-ics');
     if (ics) {
-      const event = loadedEvents.find((item) => item.id === Number(ics.dataset.id));
+      const id = Number(ics.dataset.id);
+      const event = loadedEvents.find((item) => item.id === id) || (featured?.id === id ? featured : null);
       if (event) downloadIcs(event);
       return;
     }
 
-    const trigger = e.target.closest('.js-poster');
-    if (trigger) {
-      openLightbox(trigger.dataset.src, trigger.dataset.title || '');
+    const poster = e.target.closest('.js-poster');
+    if (poster) {
+      const title = poster.dataset.title || '';
+      openLightbox([{ src: poster.dataset.src, alt: `Poster for ${title}`, caption: title }], 0, poster);
       return;
     }
+
+    const photo = e.target.closest('.js-photo');
+    if (photo) {
+      const set = photo.dataset.set === 'strip' ? stripPhotos : photos;
+      openLightbox(set.map(photoItem), Number(photo.dataset.index) || 0, photo);
+      return;
+    }
+
+    if (e.target.closest('#lightboxPrev')) { showLightboxItem(lightboxIndex - 1); return; }
+    if (e.target.closest('#lightboxNext')) { showLightboxItem(lightboxIndex + 1); return; }
     if (e.target === lightbox || e.target.closest('#lightboxClose')) closeLightbox();
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (!lightboxOpen()) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (lightboxItems.length > 1 && e.key === 'ArrowLeft') showLightboxItem(lightboxIndex - 1);
+    else if (lightboxItems.length > 1 && e.key === 'ArrowRight') showLightboxItem(lightboxIndex + 1);
+  });
+
+  // A horizontal swipe steps through the gallery on phones.
+  let touchX = null;
+  lightbox?.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  lightbox?.addEventListener('touchend', (e) => {
+    if (touchX === null || lightboxItems.length < 2) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(dx) > 50) showLightboxItem(lightboxIndex + (dx < 0 ? 1 : -1));
+  });
 
   /* ----------------------------------------------------------- nav + tabs */
 
@@ -612,4 +844,5 @@
 
   observeReveals();
   loadEvents('upcoming');
+  loadPhotos();
 })();

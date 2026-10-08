@@ -134,6 +134,7 @@ function collectFaults() {
     }
     const PAGES = [
       { path: '/', name: 'home' },
+      { path: '/calendar', name: 'calendar' },
       ...(loginPath ? [{ path: loginPath, name: 'login' }] : []),
       { path: '/no-such-page', name: '404' },
     ];

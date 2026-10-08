@@ -4,8 +4,9 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 
-const { query, rowToEvent, EVENT_COLUMNS } = require('../db');
+const { query, rowToEvent, EVENT_COLUMNS, toISODate } = require('../db');
 const { requireAuth } = require('../auth');
+const { TIME_RE, isRealDate, isHttpUrl, parseId } = require('../validate');
 
 const router = express.Router();
 
@@ -29,8 +30,6 @@ const upload = multer({
 
 /* ------------------------------------------------------------------ helpers */
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MODES = new Set(['Zoom', 'Offline', 'Hybrid']);
 
 function parseTopics(raw) {
@@ -44,15 +43,6 @@ function parseTopics(raw) {
     } catch { /* fall through to comma splitting */ }
   }
   return trimmed.split(',').map((t) => t.trim()).filter(Boolean);
-}
-
-function isHttpUrl(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 /** Validates the multipart body. Returns { data } or { errors: [...] }. */
@@ -69,8 +59,19 @@ function validateEventBody(body, { partial = false } = {}) {
 
   if (!partial || body.eventDate !== undefined) {
     const eventDate = (body.eventDate ?? '').trim();
-    if (!DATE_RE.test(eventDate)) errors.push('Date must be in YYYY-MM-DD format.');
+    if (!isRealDate(eventDate)) errors.push('Date must be in YYYY-MM-DD format.');
     else data.event_date = eventDate;
+  }
+
+  // The last day of a programme that runs over several days, so it stays
+  // listed as upcoming until it ends. Empty means a one-day event.
+  if (body.endDate !== undefined) {
+    const endDate = (body.endDate || '').trim();
+    if (endDate && !isRealDate(endDate)) errors.push('End date must be in YYYY-MM-DD format.');
+    else data.end_date = endDate && endDate !== data.event_date ? endDate : null;
+  }
+  if (data.event_date && data.end_date && data.end_date < data.event_date) {
+    errors.push('End date must be on or after the start date.');
   }
 
   for (const [field, column] of [['startTime', 'start_time'], ['endTime', 'end_time']]) {
@@ -80,7 +81,9 @@ function validateEventBody(body, { partial = false } = {}) {
       else data[column] = value;
     }
   }
-  if (data.start_time && data.end_time && data.end_time <= data.start_time) {
+  // Over several days the times are each day's session, so only a one-day
+  // event needs its end time after its start time.
+  if (!data.end_date && data.start_time && data.end_time && data.end_time <= data.start_time) {
     errors.push('End time must be after start time.');
   }
 
@@ -145,11 +148,6 @@ const fetchEvent = async (id) => {
   return rows[0] || null;
 };
 
-/** Ids arrive from the URL; reject anything that isn't a plain integer. */
-function parseId(raw) {
-  return /^\d+$/.test(String(raw)) ? Number(raw) : null;
-}
-
 /* -------------------------------------------------------------- poster bytes */
 
 // GET /posters/:id — public, cacheable, streamed straight from Postgres.
@@ -186,10 +184,11 @@ router.get('/events', async (req, res, next) => {
   const scope = String(req.query.scope || 'all').toLowerCase();
   try {
     let sql = `SELECT ${EVENT_COLUMNS} FROM events WHERE published = true`;
+    // A multi-day programme stays upcoming until its last day has passed.
     if (scope === 'upcoming') {
-      sql += ' AND event_date >= CURRENT_DATE ORDER BY event_date ASC, start_time ASC';
+      sql += ' AND COALESCE(end_date, event_date) >= CURRENT_DATE ORDER BY event_date ASC, start_time ASC';
     } else if (scope === 'past') {
-      sql += ' AND event_date < CURRENT_DATE ORDER BY event_date DESC, start_time DESC';
+      sql += ' AND COALESCE(end_date, event_date) < CURRENT_DATE ORDER BY event_date DESC, start_time DESC';
     } else {
       sql += ' ORDER BY event_date DESC, start_time DESC';
     }
@@ -269,9 +268,12 @@ router.put('/admin/events/:id', requireAuth, upload.single('poster'), async (req
 
     // Merge with the stored row so cross-field checks (times, zoom link) see
     // the real end state, not just the fields that happened to be submitted.
+    // pg hands DATE columns back as local-midnight Dates. toISODate reads them
+    // in local time; toISOString would move them a day back east of UTC.
     const merged = {
       title: existing.title,
-      eventDate: existing.event_date,
+      eventDate: toISODate(existing.event_date),
+      endDate: toISODate(existing.end_date),
       startTime: existing.start_time,
       endTime: existing.end_time,
       mode: existing.mode,
@@ -279,9 +281,6 @@ router.put('/admin/events/:id', requireAuth, upload.single('poster'), async (req
       registrationLink: existing.registration_link,
       ...req.body,
     };
-    if (merged.eventDate instanceof Date) {
-      merged.eventDate = merged.eventDate.toISOString().slice(0, 10);
-    }
 
     const { data, errors } = validateEventBody(merged);
     if (errors) return res.status(400).json({ errors });

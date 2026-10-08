@@ -122,7 +122,7 @@ describe('admin portal location', () => {
   test('no public endpoint reveals the admin path', async () => {
     // GET /api/config used to return it to anyone, defeating the secret path.
     assert.equal((await fetch(`${base}/api/config`)).status, 404);
-    for (const p of ['/', '/robots.txt', '/sitemap.xml', '/healthz', '/api/events?scope=all', '/no-such-page']) {
+    for (const p of ['/', '/calendar', '/robots.txt', '/sitemap.xml', '/healthz', '/api/events?scope=all', '/api/photos', '/api/calendar', '/no-such-page']) {
       const body = await (await fetch(`${base}${p}`)).text();
       assert.ok(!body.includes(TEST_ADMIN.path), `${p} mentions the admin path`);
     }
@@ -624,13 +624,15 @@ describe('frontend assets', () => {
   });
 
   test('no public page links to the admin portal', async () => {
-    const html = await (await fetch(`${base}/`)).text();
-    assert.doesNotMatch(html, /Club login/i);
-    assert.doesNotMatch(html, /href="[^"]*admin/i, 'admin portal is unlinked');
+    for (const p of ['/', '/calendar']) {
+      const html = await (await fetch(`${base}${p}`)).text();
+      assert.doesNotMatch(html, /Club login/i);
+      assert.doesNotMatch(html, /href="[^"]*admin/i, `${p}: admin portal is unlinked`);
+    }
   });
 
   test('theme toggle and no-flash script ship on every page', async () => {
-    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+    for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       assert.match(html, /ethicraft-theme/, `${p} has the theme bootstrap`);
     }
@@ -658,7 +660,7 @@ describe('frontend assets', () => {
 
 describe('theme', () => {
   test('every page resolves the theme before first paint', async () => {
-    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+    for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       const script = html.match(/Runs before first paint[\s\S]*?<\/script>/);
       assert.ok(script, `${p} has the theme bootstrap`);
@@ -706,7 +708,7 @@ describe('theme', () => {
 
 describe('responsive', () => {
   test('viewport meta allows zooming', async () => {
-    for (const p of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+    for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
       assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1"/);
       assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/,
@@ -730,7 +732,7 @@ describe('responsive', () => {
   });
 
   test('CSS is precompiled, not generated in the browser', async () => {
-    for (const page of ['/', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+    for (const page of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${page}`)).text();
       assert.doesNotMatch(html, /cdn\.tailwindcss\.com/,
         `${page} must not load a runtime CSS compiler - it leaves phones on slow ` +
@@ -793,3 +795,346 @@ describe('responsive', () => {
   });
 });
 
+
+/* ========================================================= multi-day events */
+
+describe('multi-day events', () => {
+  // Days relative to today, far enough out that no timezone can blur the split.
+  const day = (offset) => new Date(Date.now() + offset * 864e5).toISOString().slice(0, 10);
+  const post = (fields) => fetch(`${base}/api/admin/events`, {
+    method: 'POST', headers: jar.header, body: formData(fields),
+  });
+  const ids = async (scope) => (await json(await fetch(`${base}/api/events?scope=${scope}`))).events.map((e) => e.id);
+  const remove = (id) => fetch(`${base}/api/admin/events/${id}`, { method: 'DELETE', headers: jar.header });
+
+  test('an end date keeps a programme upcoming until its last day', async () => {
+    const { event } = await json(await post({
+      title: 'Running programme', eventDate: day(-10), endDate: day(10), mode: 'Offline', published: '1',
+    }));
+    assert.equal(event.endDate, day(10));
+    assert.ok((await ids('upcoming')).includes(event.id), 'started already, but not over');
+    assert.ok(!(await ids('past')).includes(event.id));
+    await remove(event.id);
+  });
+
+  test('once its last day has gone, a programme is past', async () => {
+    const { event } = await json(await post({
+      title: 'Finished programme', eventDate: day(-20), endDate: day(-10), mode: 'Offline', published: '1',
+    }));
+    assert.ok((await ids('past')).includes(event.id));
+    assert.ok(!(await ids('upcoming')).includes(event.id));
+    await remove(event.id);
+  });
+
+  test('end dates are checked: real, and not before the start', async () => {
+    for (const endDate of ['2027-01-01x', '2027-13-01', '2026-02-30']) {
+      const res = await post({ title: 'T', eventDate: '2026-02-01', endDate, mode: 'Offline' });
+      assert.equal(res.status, 400, `${endDate} should be refused`);
+    }
+    const early = await post({ title: 'T', eventDate: '2027-03-10', endDate: '2027-03-01', mode: 'Offline' });
+    assert.equal(early.status, 400);
+    assert.match((await json(early)).errors.join(' '), /on or after the start date/);
+  });
+
+  test('a same-day end date is stored as a one-day event', async () => {
+    const { event } = await json(await post({ title: 'One day', eventDate: '2027-03-10', endDate: '2027-03-10', mode: 'Offline' }));
+    assert.equal(event.endDate, '');
+    await remove(event.id);
+  });
+
+  test('over several days, the daily session may end before its start time', async () => {
+    const multi = await post({
+      title: 'Overnight camp', eventDate: '2027-04-01', endDate: '2027-04-03', startTime: '18:00', endTime: '09:00', mode: 'Offline',
+    });
+    assert.equal(multi.status, 201, 'times are each day, so 18:00 to 09:00 is fine');
+    await remove((await json(multi)).event.id);
+    const single = await post({ title: 'T', eventDate: '2027-04-01', startTime: '18:00', endTime: '09:00', mode: 'Offline' });
+    assert.equal(single.status, 400, 'on one day it is still a mistake');
+  });
+
+  test('impossible dates are a 400, not a 500', async () => {
+    for (const eventDate of ['2026-02-30', '2026-13-01', '2026-00-10']) {
+      const res = await post({ title: 'T', eventDate, mode: 'Offline' });
+      assert.equal(res.status, 400, `${eventDate} -> ${res.status}`);
+    }
+  });
+
+  test('an edit that leaves out the dates keeps them exactly', async () => {
+    // pg returns DATE as local midnight; rebuilding it with toISOString moved
+    // it a day back on any server east of UTC, such as a laptop in IST.
+    const { event } = await json(await post({ title: 'Keep my dates', eventDate: '2027-05-10', endDate: '2027-05-12', mode: 'Offline' }));
+    const { event: edited } = await json(await fetch(`${base}/api/admin/events/${event.id}`, {
+      method: 'PUT', headers: jar.header, body: formData({ title: 'Renamed' }),
+    }));
+    assert.equal(edited.title, 'Renamed');
+    assert.equal(edited.eventDate, '2027-05-10');
+    assert.equal(edited.endDate, '2027-05-12');
+    await remove(event.id);
+  });
+
+  test('ids beyond Postgres INTEGER range are a 404, not a 500', async () => {
+    for (const p of ['/api/events/99999999999', '/posters/99999999999', '/photos/99999999999']) {
+      assert.equal((await fetch(`${base}${p}`)).status, 404, p);
+    }
+  });
+});
+
+/* ================================================================= gallery */
+
+describe('gallery', () => {
+  const manifest = require('../assets-seed/gallery/manifest.json');
+  const photosNow = async () => (await json(await fetch(`${base}/api/photos`))).photos;
+  const jpeg = (bytes = JPEG_MIN) => new Blob([bytes], { type: 'image/jpeg' });
+  const upload = (parts) => {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(parts)) {
+      if (v instanceof Blob) fd.append(k, v, `${k}.jpg`);
+      else fd.append(k, String(v));
+    }
+    return fetch(`${base}/api/admin/photos`, { method: 'POST', headers: jar.header, body: fd });
+  };
+  const patch = (id, body) => fetch(`${base}/api/admin/photos/${id}`, {
+    method: 'PATCH', headers: { ...jar.header, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const remove = (id) => fetch(`${base}/api/admin/photos/${id}`, { method: 'DELETE', headers: jar.header });
+
+  test('the photos picked from the club album are seeded in order', async () => {
+    const photos = await photosNow();
+    assert.equal(photos.length, manifest.length);
+    assert.deepEqual(photos.map((p) => p.caption), manifest.map((m) => m.caption));
+    assert.equal(photos.filter((p) => p.inStrip).length, manifest.filter((m) => m.inStrip).length);
+    for (const p of photos) {
+      assert.match(p.src, /^\/photos\/\d+\?v=\d+$/);
+      assert.match(p.thumb, /^\/photos\/\d+\/thumb\?v=\d+$/);
+      assert.ok(p.width > 0 && p.height > 0, 'size known, so the page reserves the space');
+    }
+  });
+
+  test('photos are JPEGs, cached for good at a versioned URL', async () => {
+    const [p] = await photosNow();
+    const sizes = [];
+    for (const url of [p.src, p.thumb]) {
+      const res = await fetch(`${base}${url}`);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get('content-type'), 'image/jpeg');
+      assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+      assert.match(res.headers.get('cache-control'), /max-age=31536000, immutable/);
+      const bytes = Buffer.from(await res.arrayBuffer());
+      assert.deepEqual([...bytes.subarray(0, 2)], [0xff, 0xd8], 'JPEG magic');
+      sizes.push(bytes.length);
+    }
+    assert.ok(sizes[1] < sizes[0], 'the thumbnail is the lighter download');
+    const bare = await fetch(`${base}/photos/${p.id}`);
+    assert.equal(bare.headers.get('cache-control'), 'no-cache', 'without a version it revalidates');
+    const again = await fetch(`${base}${p.thumb}`, { headers: { 'If-None-Match': bare.headers.get('etag') } });
+    assert.equal(again.status, 200, 'thumbnail and photo do not share an ETag');
+  });
+
+  test('unknown photos are a 404', async () => {
+    for (const p of ['/photos/999999', '/photos/999999/thumb', '/photos/abc', '/photos/1;DROP TABLE photos']) {
+      assert.equal((await fetch(`${base}${p}`)).status, 404, p);
+    }
+  });
+
+  test('the gallery admin API is closed without a session', async () => {
+    for (const [method, path] of [
+      ['POST', '/api/admin/photos'], ['PATCH', '/api/admin/photos/1'], ['DELETE', '/api/admin/photos/1'],
+    ]) {
+      assert.equal((await fetch(`${base}${path}`, { method })).status, 401, `${method} ${path}`);
+    }
+  });
+
+  test('an upload goes to the front, with its size read from the JPEG itself', async () => {
+    const res = await upload({ photo: jpeg(), thumb: jpeg(), caption: '<b>Fresh</b> upload', inStrip: 'true', width: 9999 });
+    assert.equal(res.status, 201);
+    const { photo } = await json(res);
+    assert.equal(photo.width, 1, 'the declared width is ignored; JPEG_MIN is 1x1');
+    assert.equal(photo.caption, '<b>Fresh</b> upload', 'stored as text, escaped on output');
+    assert.equal(photo.inStrip, true);
+    assert.equal((await photosNow())[0].id, photo.id);
+    await remove(photo.id);
+  });
+
+  test('only real JPEGs get in', async () => {
+    const png = await upload({ photo: new Blob([PNG_1PX], { type: 'image/png' }), thumb: jpeg() });
+    assert.equal(png.status, 400);
+    assert.match((await json(png)).errors.join(' '), /JPG images are allowed/);
+
+    const fake = await upload({ photo: jpeg(Buffer.from('#!/bin/sh\necho owned')), thumb: jpeg() });
+    assert.equal(fake.status, 400, 'a script labelled image/jpeg is still not a JPEG');
+
+    const noThumb = await upload({ photo: jpeg() });
+    assert.equal(noThumb.status, 400);
+    assert.match((await json(noThumb)).errors.join(' '), /thumbnail/);
+  });
+
+  test('captions, the strip flag and the order can all be changed', async () => {
+    const a = (await json(await upload({ photo: jpeg(), thumb: jpeg(), caption: 'A' }))).photo;
+    const b = (await json(await upload({ photo: jpeg(), thumb: jpeg(), caption: 'B' }))).photo;
+    let order = (await photosNow()).map((p) => p.id);
+    assert.ok(order.indexOf(b.id) < order.indexOf(a.id), 'the newest leads');
+
+    const { photo } = await json(await patch(a.id, { caption: 'A, renamed', inStrip: true }));
+    assert.equal(photo.caption, 'A, renamed');
+    assert.equal(photo.inStrip, true);
+
+    assert.equal((await patch(a.id, { move: 'up' })).status, 200);
+    order = (await photosNow()).map((p) => p.id);
+    assert.ok(order.indexOf(a.id) < order.indexOf(b.id), 'moved ahead of its neighbour');
+
+    assert.equal((await patch(a.id, { move: 'sideways' })).status, 400);
+    assert.equal((await patch(999999, { caption: 'x' })).status, 404);
+    await remove(a.id);
+    await remove(b.id);
+  });
+
+  test('a deleted photo is gone, bytes and all', async () => {
+    const { photo } = await json(await upload({ photo: jpeg(), thumb: jpeg() }));
+    assert.equal((await remove(photo.id)).status, 200);
+    assert.equal((await fetch(`${base}${photo.src}`)).status, 404);
+    assert.ok(!(await photosNow()).some((p) => p.id === photo.id));
+    assert.equal((await remove(photo.id)).status, 404);
+  });
+});
+
+/* ============================================================= FY calendar */
+
+describe('FY calendar', () => {
+  const entriesNow = async () => (await json(await fetch(`${base}/api/calendar`))).entries;
+  const send = (method, path, body) => fetch(`${base}${path}`, {
+    method, headers: { ...jar.header, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const valid = { title: 'Orientation', startDate: '2027-07-20', label: 'Workshop' };
+
+  test('the page is served, linked from the nav and listed in the sitemap', async () => {
+    const page = await fetch(`${base}/calendar`);
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /FY Calendar/);
+    assert.match(await (await fetch(`${base}/`)).text(), /href="\/calendar"/);
+    assert.match(await (await fetch(`${base}/sitemap.xml`)).text(), /<loc>https:\/\/ethicraft\.in\/calendar<\/loc>/);
+  });
+
+  test("the programme's schedule from its poster is seeded, earliest first", async () => {
+    const entries = await entriesNow();
+    assert.equal(entries.length, 17);
+    assert.deepEqual(entries.map((e) => e.startDate), [...entries.map((e) => e.startDate)].sort());
+    assert.deepEqual(
+      { title: entries[0].title, date: entries[0].startDate, time: `${entries[0].startTime}-${entries[0].endTime}`, label: entries[0].label },
+      { title: 'Discover the Game of Life', date: '2026-10-12', time: '17:15-18:15', label: 'Wisdom Track' });
+    assert.equal(entries.filter((e) => e.label === 'Technical Track').length, 6);
+    const buffer = entries.find((e) => e.startDate === '2026-10-20');
+    assert.equal(buffer.startTime, '', 'the buffer day has no session time');
+  });
+
+  test('the calendar admin API is closed without a session', async () => {
+    for (const [method, path] of [
+      ['POST', '/api/admin/calendar'], ['PUT', '/api/admin/calendar/1'], ['DELETE', '/api/admin/calendar/1'],
+    ]) {
+      assert.equal((await fetch(`${base}${path}`, { method })).status, 401, `${method} ${path}`);
+    }
+  });
+
+  test('entries can be added, edited and deleted', async () => {
+    const created = await send('POST', '/api/admin/calendar', { ...valid, endDate: '2027-07-22', startTime: '10:00', endTime: '12:30', details: 'Seminar Hall', link: 'https://example.com' });
+    assert.equal(created.status, 201);
+    const { entry } = await json(created);
+    assert.deepEqual([entry.startDate, entry.endDate, entry.startTime, entry.endTime], ['2027-07-20', '2027-07-22', '10:00', '12:30']);
+
+    const edited = await json(await send('PUT', `/api/admin/calendar/${entry.id}`, { ...valid, title: 'Orientation day' }));
+    assert.equal(edited.entry.title, 'Orientation day');
+    assert.equal(edited.entry.endDate, '', 'a full replace: fields left out are cleared');
+
+    assert.equal((await fetch(`${base}/api/admin/calendar/${entry.id}`, { method: 'DELETE', headers: jar.header })).status, 200);
+    assert.ok(!(await entriesNow()).some((e) => e.id === entry.id));
+    assert.equal((await send('PUT', `/api/admin/calendar/${entry.id}`, valid)).status, 404);
+  });
+
+  test('entries are validated', async () => {
+    const bad = [
+      { ...valid, title: '' },
+      { ...valid, startDate: '2027-02-30' },
+      { ...valid, endDate: '2027-07-01' },
+      { ...valid, startTime: '25:00' },
+      { ...valid, startTime: '12:00', endTime: '11:00' },
+      { ...valid, link: 'javascript:alert(1)' },
+    ];
+    for (const body of bad) {
+      assert.equal((await send('POST', '/api/admin/calendar', body)).status, 400, JSON.stringify(body));
+    }
+  });
+});
+
+/* =========================================================== starter content */
+
+describe('starter content', () => {
+  test('the gallery and calendar are seeded once: deleted, they stay deleted after a restart', async () => {
+    const first = await startServer();
+    let second;
+    try {
+      const admin = makeJar();
+      await login(first.base, admin);
+      const del = (path) => fetch(`${first.base}${path}`, { method: 'DELETE', headers: admin.header });
+      for (const p of (await json(await fetch(`${first.base}/api/photos`))).photos) await del(`/api/admin/photos/${p.id}`);
+      for (const e of (await json(await fetch(`${first.base}/api/calendar`))).entries) await del(`/api/admin/calendar/${e.id}`);
+      await first.stop({ keepDatabase: true });
+
+      second = await startServer({}, { database: first.database });
+      assert.equal((await json(await fetch(`${second.base}/api/photos`))).photos.length, 0);
+      assert.equal((await json(await fetch(`${second.base}/api/calendar`))).entries.length, 0);
+    } finally {
+      await (second || first).stop();
+    }
+  });
+});
+
+/* ============================================================== homepage */
+
+describe('homepage changes', () => {
+  const REGISTER = 'https://tinyurl.com/ethicraftpict';
+
+  test('"Join the club" and the join section both open the registration form', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    const links = [...html.matchAll(/<a\b[^>]*href="https:\/\/tinyurl\.com\/ethicraftpict"[^>]*>/g)].map((m) => m[0]);
+    assert.ok(links.length >= 3, 'nav, mobile menu and join section');
+    for (const a of links) {
+      assert.match(a, /target="_blank"/);
+      assert.match(a, /rel="noopener noreferrer"/);
+    }
+    const join = html.match(/<section id="join"[\s\S]*?<\/section>/)[0];
+    assert.ok(join.includes(REGISTER) && /Register now/.test(join));
+    assert.doesNotMatch(join, /Email us to join|tel:/, 'one button, not two');
+  });
+
+  test('the logo follows the theme, from background-free PNGs', async () => {
+    for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+      const html = await (await fetch(`${base}${p}`)).text();
+      assert.match(html, /<img src="\/assets\/logo-day\.png"[^>]*class="ec-logo-day/, `${p}: day logo`);
+      assert.match(html, /<img src="\/assets\/logo-night\.png"[^>]*class="ec-logo-night/, `${p}: night logo`);
+      assert.doesNotMatch(html, /<img src="\/assets\/logo\.png"/, `${p}: no boxed logo left on the page`);
+    }
+    const css = await (await fetch(`${base}/css/styles.css`)).text();
+    assert.match(css, /:root:not\(\[data-theme="dark"\]\) \.ec-logo-night,\s*\[data-theme="dark"\] \.ec-logo-day \{ display: none !important; \}/);
+    for (const file of ['logo-day.png', 'logo-night.png']) {
+      const png = Buffer.from(await (await fetch(`${base}/assets/${file}`)).arrayBuffer());
+      assert.equal(png.toString('latin1', 12, 16), 'IHDR');
+      assert.equal(png[25], 6, `${file} carries an alpha channel (RGBA)`);
+    }
+  });
+
+  test('the page has the activity strip, the featured poster, the gallery and a gallery lightbox', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    for (const id of ['activityStrip', 'featured', 'featuredImg', 'galleryGrid', 'lightboxPrev', 'lightboxNext', 'lightboxCaption']) {
+      assert.match(html, new RegExp(`id="${id}"`), id);
+    }
+    assert.ok(html.indexOf('id="activityStrip"') < html.indexOf('<h1'), 'the strip sits right under the nav');
+    assert.match(html, /href="#gallery"/);
+  });
+
+  test('posters are shown whole, and the featured one as large as the window', async () => {
+    const css = await (await fetch(`${base}/css/styles.css`)).text();
+    const card = css.match(/\.ec-poster \{[^}]*\}/)[0];
+    assert.doesNotMatch(card, /object-fit: cover/, 'a portrait crop cut landscape posters down');
+    assert.match(card, /object-fit: contain/);
+    assert.match(css, /\.ec-feature-poster \{[^}]*max-width: 100%;[^}]*max-height: 88vh;/);
+  });
+});

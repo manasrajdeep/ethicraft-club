@@ -39,6 +39,8 @@ async function buildSitemap({ origin }) {
     { loc: `${origin}/#about`,    changefreq: 'monthly', priority: '0.8' },
     { loc: `${origin}/#modules`,  changefreq: 'monthly', priority: '0.8' },
     { loc: `${origin}/#events`,   changefreq: 'weekly',  priority: '0.9' },
+    { loc: `${origin}/calendar`,  changefreq: 'weekly',  priority: '0.9' },
+    { loc: `${origin}/#gallery`,  changefreq: 'monthly', priority: '0.7' },
     { loc: `${origin}/#speakers`, changefreq: 'monthly', priority: '0.7' },
     { loc: `${origin}/#join`,     changefreq: 'monthly', priority: '0.8' },
   ];
