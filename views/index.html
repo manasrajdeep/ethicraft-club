@@ -326,6 +326,7 @@
     </div>
     <div id="activityStrip" class="ec-strip pb-5" aria-busy="true"></div>
   </div>
+  <div class="ec-brand-seam" aria-hidden="true"></div>
 </section>
 
 <!-- ============================================================= HERO -->
@@ -434,8 +435,11 @@
 <!-- ================================================== FEATURED POSTER -->
 <!-- The next session's poster, as large as the window allows. Filled by
      main.js and left hidden when the next session has no poster. -->
-<section id="featured" class="hidden bg-deep2 py-14 text-white sm:py-20" aria-labelledby="featuredTitle">
-  <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
+<section id="featured" class="relative hidden overflow-hidden bg-deep2 py-14 text-white sm:py-20" aria-labelledby="featuredTitle">
+  <div class="ec-mesh" aria-hidden="true"></div>
+  <div class="ec-grid-bg-dark pointer-events-none absolute inset-0 opacity-60" aria-hidden="true"></div>
+
+  <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="flex flex-wrap items-end justify-between gap-5">
       <div class="min-w-0">
         <p id="featuredKicker" class="ec-label flex items-center gap-2 text-amber-brand"></p>
@@ -444,10 +448,16 @@
       </div>
       <div id="featuredActions" class="flex flex-wrap items-center gap-2"></div>
     </div>
-    <button type="button" id="featuredPoster" class="js-poster mt-8 block w-full rounded-[1.25rem]">
-      <img id="featuredImg" src="" alt="" class="ec-feature-poster shadow-2xl ring-1 ring-white/10" />
-    </button>
-    <p class="ec-label mt-4 text-center text-ondeep/40">TAP THE POSTER TO VIEW IT FULL SCREEN</p>
+    <div class="relative mt-10">
+      <div class="ec-poster-glow" aria-hidden="true"></div>
+      <button type="button" id="featuredPoster" class="js-poster group relative block w-full rounded-[1.25rem]">
+        <img id="featuredImg" src="" alt="" class="ec-feature-poster shadow-2xl ring-1 ring-white/15 transition duration-500 group-hover:scale-[1.01]" />
+      </button>
+    </div>
+    <p class="ec-label mt-5 flex items-center justify-center gap-2 text-ondeep/45">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      TAP THE POSTER TO VIEW IT FULL SCREEN
+    </p>
   </div>
 </section>
 
@@ -706,52 +716,76 @@
       </div>
 
       <ol class="ec-reveal">
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.01</span>
-          <div><h3 class="font-display text-lg font-bold">Dr. Hari Krishna Padavala</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">CHAIRMAN · ETHICRAFT PAN INDIA</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">HP</span>
+            <div><h3 class="font-display text-lg font-bold">Dr. Hari Krishna Padavala</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">CHAIRMAN · ETHICRAFT PAN INDIA</p></div>
+          </div>
           <p class="text-muted">Associate Professor, NIT Warangal.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.02</span>
-          <div><h3 class="font-display text-lg font-bold">Dr. Amber Sayal</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">PH.D. IIFT</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">AS</span>
+            <div><h3 class="font-display text-lg font-bold">Dr. Amber Sayal</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">PH.D. IIFT</p></div>
+          </div>
           <p class="text-muted">Client Partner, Tata Consultancy Services.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.03</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. Niranjan Pendharkar</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">ME IISC · BE VNIT</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">NP</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. Niranjan Pendharkar</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">ME IISC · BE VNIT</p></div>
+          </div>
           <p class="text-muted">Google.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.04</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. Amarjit Gupta</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">CSE · IIT KHARAGPUR</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">AG</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. Amarjit Gupta</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">CSE · IIT KHARAGPUR</p></div>
+          </div>
           <p class="text-muted">Lead Design Engineer, Cadence Design Systems.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.05</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. Shantanu Velankar</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">SENIOR MANAGER, R&amp;D</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">SV</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. Shantanu Velankar</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">SENIOR MANAGER, R&amp;D</p></div>
+          </div>
           <p class="text-muted">VMware.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.06</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. Aman Jain</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">IIT KHARAGPUR</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">AJ</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. Aman Jain</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">IIT KHARAGPUR</p></div>
+          </div>
           <p class="text-muted">Senior Staff Engineer, Seagate Technology.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.07</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. Amal M Das</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">NIT ROURKELA</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">AD</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. Amal M Das</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">NIT ROURKELA</p></div>
+          </div>
           <p class="text-muted">CEO, ARJUNA Group Trust.</p>
         </li>
-        <li class="ec-row">
+        <li class="ec-row ec-row--people">
           <span class="ec-row__num">M.08</span>
-          <div><h3 class="font-display text-lg font-bold">Mr. K S Subramanyam</h3>
-            <p class="ec-label mt-1.5 text-magenta-brand">PMP · CSQA · CBAP</p></div>
+          <div class="flex items-center gap-4">
+            <span class="ec-monogram" aria-hidden="true">KS</span>
+            <div><h3 class="font-display text-lg font-bold">Mr. K S Subramanyam</h3>
+              <p class="ec-label mt-1.5 text-magenta-brand">PMP · CSQA · CBAP</p></div>
+          </div>
           <p class="text-muted">General Manager, Persistent Systems.</p>
         </li>
       </ol>
@@ -776,7 +810,10 @@
       We can't wait to create with you — let's craft a brighter future, together.
     </p>
 
-    <div class="ec-reveal mt-10 flex justify-center">
+    <!-- Real faces from the gallery, fanned out like prints on a table. -->
+    <div id="joinPhotos" class="ec-reveal mt-12 flex justify-center px-4 empty:hidden" aria-hidden="true"></div>
+
+    <div class="ec-reveal mt-12 flex justify-center">
       <a href="https://tinyurl.com/ethicraftpict" target="_blank" rel="noopener noreferrer"
          class="inline-flex items-center gap-2 rounded-full bg-amber-brand px-8 py-4 text-base font-bold text-deep2 shadow-lg transition hover:brightness-110">
         Register now

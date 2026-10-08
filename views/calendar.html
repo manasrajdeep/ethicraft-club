@@ -141,13 +141,20 @@
       </a>
       <div id="calYears" class="flex flex-wrap gap-2" role="tablist" aria-label="Academic year"></div>
     </div>
+
+    <!-- The year at a glance, in the same mono strip as the homepage. -->
+    <div id="calStats" class="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/10 pt-6 empty:hidden"></div>
   </div>
 </section>
+<div class="ec-brand-seam" aria-hidden="true"></div>
 
 <!-- =========================================================== SCHEDULE -->
 <section class="relative bg-bg py-14 sm:py-20">
   <div class="ec-grid-bg pointer-events-none absolute inset-0" aria-hidden="true"></div>
   <div class="relative mx-auto max-w-5xl px-5 lg:px-10">
+    <!-- Next up, and the track filter. Kept outside #calendarRoot, which holds only the months. -->
+    <div id="calOverview" class="mb-12 empty:hidden"></div>
+
     <div id="calendarRoot" aria-live="polite" aria-busy="true">
       <div class="ec-skeleton h-24 rounded-2xl"></div>
       <div class="ec-skeleton mt-3 h-24 rounded-2xl"></div>

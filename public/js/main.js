@@ -244,21 +244,27 @@
     </div>`;
   }
 
-  function eventCard(event, { isPast }) {
+  /**
+   * One event card. `wide` is for a lone event: it spans the grid with the
+   * poster beside the details, instead of a single card stranded in a column.
+   */
+  function eventCard(event, { isPast, wide = false }) {
     const date = formatDate(event.eventDate);
     const until = isMultiDay(event) ? formatDate(event.endDate) : null;
     const modeClass = MODE_STYLES[event.mode] || MODE_STYLES.Zoom;
 
     const poster = event.posterPath
-      ? `<button type="button" class="js-poster group relative block w-full overflow-hidden rounded-t-2xl"
+      ? `<button type="button" class="js-poster group relative block w-full overflow-hidden ${wide
+              ? 'bg-surface2 md:flex md:h-full md:items-center md:justify-center md:p-6'
+              : 'rounded-t-2xl'}"
                  data-src="${esc(event.posterPath)}" data-title="${esc(event.title)}">
            <img src="${esc(event.posterPath)}" alt="Poster for ${esc(event.title)}" loading="lazy"
-                class="ec-poster transition duration-500 group-hover:scale-[1.03]" />
+                class="ec-poster transition duration-500 group-hover:scale-[1.03] ${wide ? 'md:rounded-xl md:shadow-lg' : ''}" />
            <span class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-deep2/70 to-transparent p-3 text-left text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
              View full poster
            </span>
          </button>`
-      : `<div class="grid h-40 place-items-center rounded-t-2xl bg-gradient-to-br from-deep to-sky-dark">
+      : `<div class="grid ${wide ? 'h-40 md:h-full md:min-h-[18rem]' : 'h-40 rounded-t-2xl'} place-items-center bg-gradient-to-br from-deep to-sky-dark">
            ${logo('h-16 w-16 opacity-90')}
          </div>`;
 
@@ -285,18 +291,19 @@
         : `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/50">Joining details coming soon</span>`;
 
     return `
-      <article class="ec-card ec-bracket ec-reveal flex flex-col overflow-hidden text-ink ${isPast ? 'opacity-90' : ''}">
+      <article class="ec-card ec-bracket ec-reveal flex flex-col overflow-hidden text-ink ${isPast ? 'opacity-90' : ''} ${wide
+        ? 'md:col-span-2 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:col-span-3' : ''}">
         ${poster}
-        <div class="flex flex-1 flex-col p-6">
+        <div class="flex flex-1 flex-col p-6 ${wide ? 'md:p-9 lg:p-12' : ''}">
           <div class="flex items-start gap-4">
             <div class="shrink-0 rounded-xl bg-surface2 px-3 py-2 text-center">
               <span class="block font-display text-2xl font-black leading-none text-ink">${date.day}</span>
               <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-brand">${date.month}</span>
-              ${until ? `<span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-ink/50">to ${until.day} ${until.month}</span>` : ''}
+              ${until ? `<span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.06em] text-ink/50">to ${until.day} ${until.month}</span>` : ''}
             </div>
             <div class="min-w-0">
               <span class="ec-chip ${modeClass}">${esc(event.mode)}</span>
-              <h3 class="mt-2 font-display text-xl font-bold leading-snug">${esc(event.title)}</h3>
+              <h3 class="mt-2 font-display ${wide ? 'text-2xl lg:text-3xl' : 'text-xl'} font-bold leading-snug">${esc(event.title)}</h3>
               ${event.subtitle ? `<p class="mt-1 text-sm font-medium text-magenta-brand">${esc(event.subtitle)}</p>` : ''}
             </div>
           </div>
@@ -560,8 +567,9 @@
       loadedEvents = events;
       renderEventsMeta(events, scope);
 
+      const wide = events.length === 1;
       grid.innerHTML = events.length
-        ? events.map((e) => eventCard(e, { isPast: scope === 'past' })).join('')
+        ? events.map((e) => eventCard(e, { isPast: scope === 'past', wide })).join('')
         : emptyState(scope);
 
       if (scope === 'upcoming') {
@@ -625,6 +633,22 @@
     host.style.setProperty('--strip-duration', `${Math.max(30, Math.round(width / 40))}s`);
   }
 
+  /**
+   * A fan of five prints in the join section: real faces just before the
+   * Register button. Phones keep the middle three so the fan fits.
+   */
+  const TILTS = ['-9deg', '-4deg', '1.5deg', '5deg', '9.5deg'];
+  function renderJoinPhotos() {
+    const host = $('#joinPhotos');
+    if (!host) return;
+    const picks = stripPhotos.slice(0, TILTS.length);
+    host.innerHTML = picks.map((p, i) => `
+      <span class="ec-polaroid js-photo ${i === 0 || i === TILTS.length - 1 ? 'hidden sm:block' : ''}"
+            data-set="strip" data-index="${i}" style="--tilt: ${TILTS[i]}">
+        <img src="${esc(p.thumb)}" alt="" loading="lazy" decoding="async" />
+      </span>`).join('');
+  }
+
   function renderGallery() {
     const host = $('#galleryGrid');
     if (!host) return;
@@ -653,6 +677,7 @@
       photos = [];
     }
     renderStrip();
+    renderJoinPhotos();
     renderGallery();
   }
 

@@ -372,6 +372,17 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       assert(featured.w >= featured.vw * 0.8 || featured.h >= featured.vh * 0.8,
         `poster only ${featured.w}x${featured.h} in a ${featured.vw}x${featured.vh} window`);
 
+      // A lone upcoming event fills the row rather than sitting in one column.
+      const span = await home.evaluate(() => {
+        const cards = document.querySelectorAll('#eventsGrid article');
+        return { cards: cards.length, ratio: cards[0].offsetWidth / document.querySelector('#eventsGrid').offsetWidth };
+      });
+      assert(span.cards === 1 && span.ratio > 0.95, `lone card spans ${Math.round(span.ratio * 100)}% of the grid`);
+
+      // The join section fans out real photos above its button.
+      const prints = await home.$$eval('#joinPhotos .ec-polaroid img', (imgs) => imgs.map((i) => i.getAttribute('src')));
+      assert(prints.length === 5 && prints.every((src) => /^\/photos\/\d+\/thumb/.test(src)), `join photos: ${prints.join(', ')}`);
+
       const rels = await home.$$eval('#eventsGrid a[href="https://example.com/register"]', (els) => els.map((a) => a.rel));
       assert(rels.length && rels.every((r) => /noopener/.test(r)), `registration link rel: ${JSON.stringify(rels)}`);
       const p = await homeProblems();
@@ -705,6 +716,23 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
         assert(info.months.includes('October 2026') && info.months.includes('November 2026'), info.months.join(', '));
         assert(info.rows >= 17, `${info.rows} entries`);
         assert(info.current === 'FY Calendar', `nav marks ${info.current} as current`);
+
+        // The spotlight names what is on today or next, unless the year is over.
+        const anyAhead = await page.evaluate(() => {
+          const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+          return fetch('/api/calendar').then((r) => r.json())
+            .then(({ entries }) => entries.some((e) => (e.endDate || e.startDate) >= today));
+        });
+        const spotlight = await page.$eval('#calOverview', (el) => el.textContent.replace(/\s+/g, ' '));
+        assert(!anyAhead || /NEXT UP|ON TODAY/.test(spotlight), `spotlight: ${spotlight.slice(0, 120)}`);
+
+        // A track chip narrows the timeline to that track, and All brings it back.
+        await page.click('[data-track="Technical Track"]');
+        const labels = await page.$$eval('#calendarRoot li .ec-chip:first-child', (els) => [...new Set(els.map((e) => e.textContent.trim()))]);
+        assert(labels.length === 1 && labels[0] === 'Technical Track', `filtered labels: ${labels.join(', ')}`);
+        assert(await page.$eval('[data-track="Technical Track"]', (b) => b.getAttribute('aria-pressed')) === 'true');
+        await page.click('[data-track=""]');
+        assert(await page.$$eval('#calendarRoot li', (els) => els.length) === info.rows, 'All restores every entry');
         const p = await problems();
         assert(!p.length, p.join('\n'));
       } finally {
