@@ -118,6 +118,15 @@ describe('admin portal location', () => {
     const res = await fetch(`${base}${TEST_ADMIN.path}/login`);
     assert.match(await res.text(), /name="robots"[^>]*noindex/);
   });
+
+  test('no public endpoint reveals the admin path', async () => {
+    // GET /api/config used to return it to anyone, defeating the secret path.
+    assert.equal((await fetch(`${base}/api/config`)).status, 404);
+    for (const p of ['/', '/robots.txt', '/sitemap.xml', '/healthz', '/api/events?scope=all', '/no-such-page']) {
+      const body = await (await fetch(`${base}${p}`)).text();
+      assert.ok(!body.includes(TEST_ADMIN.path), `${p} mentions the admin path`);
+    }
+  });
 });
 
 /* ==================================================================== auth */
@@ -171,6 +180,28 @@ describe('authentication', () => {
     const res = await fetch(`${base}${TEST_ADMIN.path}`, { headers: jar.header });
     assert.equal(res.status, 200);
     assert.match(await res.text(), /EthiCraft Admin/);
+  });
+
+  test('changing the admin username retires the old login and its sessions', async () => {
+    const old = { ADMIN_USERNAME: 'old-admin', ADMIN_PASSWORD: 'old-password-1' };
+    const first = await startServer(old);
+    let second;
+    try {
+      const oldSession = makeJar();
+      assert.equal((await login(first.base, oldSession, old.ADMIN_USERNAME, old.ADMIN_PASSWORD)).status, 200);
+      await first.stop({ keepDatabase: true });
+
+      // Same database, new credentials: a restart after editing the environment.
+      second = await startServer({ ADMIN_USERNAME: 'new-admin', ADMIN_PASSWORD: 'new-password-2' },
+        { database: first.database });
+      assert.equal((await login(second.base, makeJar(), old.ADMIN_USERNAME, old.ADMIN_PASSWORD)).status, 401,
+        'the old login no longer works');
+      assert.equal((await fetch(`${second.base}/api/admin/me`, { headers: oldSession.header })).status, 401,
+        'a session from before the change is signed out');
+      assert.equal((await login(second.base, makeJar(), 'new-admin', 'new-password-2')).status, 200);
+    } finally {
+      await (second || first).stop();
+    }
   });
 });
 
@@ -464,7 +495,7 @@ describe('attack surface', () => {
   });
 
   test('admin credentials are never echoed by any endpoint', async () => {
-    for (const p of ['/api/config', '/healthz', '/api/admin/me', '/api/events?scope=all']) {
+    for (const p of ['/healthz', '/api/admin/me', '/api/events?scope=all']) {
       const body = await (await fetch(`${base}${p}`, { headers: jar.header })).text();
       assert.doesNotMatch(new RegExp(TEST_ADMIN.password, 'i').test(body) ? 'LEAK' : body, /LEAK|password_hash|SESSION_SECRET/i, `${p} leaks secrets`);
     }

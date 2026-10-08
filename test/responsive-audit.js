@@ -5,13 +5,13 @@
  * that static inspection cannot catch: horizontal overflow, elements wider than
  * the screen, tap targets below the 44px minimum, and unreadable text.
  *
- *   node test/responsive-audit.js            boots a throwaway test server
- *   node test/responsive-audit.js <baseUrl>  audits a server that is already up
+ *   node test/responsive-audit.js                         boots a throwaway test server
+ *   node test/responsive-audit.js <baseUrl> [loginPath]   audits a server that is already up
  */
 const puppeteer = require('puppeteer');
 const fs = require('node:fs');
 const path = require('node:path');
-const { startServer } = require('./helpers');
+const { startServer, TEST_ADMIN } = require('./helpers');
 
 const SHOTS = path.join(__dirname, '..', '.audit-shots', 'responsive');
 
@@ -115,19 +115,26 @@ function collectFaults() {
 
 (async () => {
   // Without a URL, audit a disposable server the way the integration suite does.
-  const server = process.argv[2] ? null : await startServer();
-  const BASE = process.argv[2] || server.base;
+  const [urlArg, loginArg] = process.argv.slice(2);
+  const server = urlArg ? null : await startServer();
+  const BASE = urlArg || server.base;
+  // A real server's admin path is secret, so nothing will tell us where its
+  // login page is. Skip it unless given, rather than auditing a 404 instead.
+  const loginPath = urlArg ? loginArg : `${TEST_ADMIN.path}/login`;
   let browser;
   let total = 0;
   let pageCount = 0;
 
   try {
-    // The login page lives under ADMIN_PATH, which differs per server. Ask
-    // rather than guess: a wrong guess silently audits the 404 page twice.
-    const { loginPath } = await (await fetch(`${BASE}/api/config`)).json();
+    if (loginPath) {
+      const res = await fetch(`${BASE}${loginPath}`);
+      if (!res.ok) throw new Error(`${loginPath} answered ${res.status}: is that the login page?`);
+    } else {
+      console.log('\n  Skipping the login page: pass its path after the URL to include it.');
+    }
     const PAGES = [
       { path: '/', name: 'home' },
-      { path: loginPath, name: 'login' },
+      ...(loginPath ? [{ path: loginPath, name: 'login' }] : []),
       { path: '/no-such-page', name: '404' },
     ];
     pageCount = PAGES.length;

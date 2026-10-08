@@ -85,22 +85,38 @@ async function migrate() {
   `);
 }
 
+/**
+ * ADMIN_USERNAME and ADMIN_PASSWORD are the only source of truth for the admin
+ * login: changing either and restarting is how credentials are rotated. Any
+ * account under another username is removed (a renamed admin used to leave the
+ * old login working), and a change signs every session out, so nobody stays
+ * signed in on the old credentials.
+ */
 async function ensureAdminUser() {
   const username = process.env.ADMIN_USERNAME || 'admin';
   const password = process.env.ADMIN_PASSWORD || 'ethicraft@pict';
 
   const { rows } = await query('SELECT * FROM admins WHERE username = $1', [username]);
   const existing = rows[0];
+  let changed = false;
 
   if (!existing) {
     await query('INSERT INTO admins (username, password_hash) VALUES ($1, $2)',
       [username, bcrypt.hashSync(password, 12)]);
-    return;
-  }
-  // Keep the stored hash in step if ADMIN_PASSWORD changes in the environment.
-  if (!bcrypt.compareSync(password, existing.password_hash)) {
+    changed = true;
+  } else if (!bcrypt.compareSync(password, existing.password_hash)) {
+    // Keep the stored hash in step if ADMIN_PASSWORD changes in the environment.
     await query('UPDATE admins SET password_hash = $1 WHERE id = $2',
       [bcrypt.hashSync(password, 12), existing.id]);
+    changed = true;
+  }
+
+  const removed = await query('DELETE FROM admins WHERE username <> $1', [username]);
+  if (changed || removed.rowCount) {
+    // connect-pg-simple creates the sessions table on first use, so it may not exist yet.
+    await query(`DO $$ BEGIN
+      IF to_regclass('user_sessions') IS NOT NULL THEN DELETE FROM user_sessions; END IF;
+    END $$`);
   }
 }
 

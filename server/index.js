@@ -166,10 +166,8 @@ app.get(LOGIN_PATH, (req, res) => {
 });
 app.get(ADMIN_PATH, requireAuthPage(LOGIN_PATH), sendPage('admin.html'));
 
-// Tells the login and dashboard pages where to post without hardcoding the path.
-app.get('/api/config', (_req, res) => {
-  res.json({ adminPath: ADMIN_PATH, loginPath: LOGIN_PATH });
-});
+// The login and dashboard pages derive their paths from their own URL. Nothing
+// public may hand out ADMIN_PATH: a /api/config route used to, to anyone.
 
 /* -------------------------------------------------------------------- seo */
 

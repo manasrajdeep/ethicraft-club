@@ -29,9 +29,10 @@ const psql = (sql, db = 'postgres') =>
   execSync(`psql "${PG_ADMIN_URL.replace(/\/[^/]*$/, `/${db}`)}" -v ON_ERROR_STOP=1 -c ${JSON.stringify(sql)}`,
     { stdio: 'pipe' });
 
-async function startServer(env = {}) {
-  const dbName = `ethicraft_test_${crypto.randomBytes(6).toString('hex')}`;
-  psql(`CREATE DATABASE ${dbName}`);
+/** Pass `database` to boot against an existing one, e.g. to restart a server. */
+async function startServer(env = {}, { database } = {}) {
+  const dbName = database || `ethicraft_test_${crypto.randomBytes(6).toString('hex')}`;
+  if (!database) psql(`CREATE DATABASE ${dbName}`);
   const databaseUrl = PG_ADMIN_URL.replace(/\/[^/]*$/, `/${dbName}`);
   const port = 3000 + Math.floor(Math.random() * 20000);
 
@@ -69,10 +70,15 @@ async function startServer(env = {}) {
 
   return {
     base,
+    database: dbName,
     getLog: () => log,
-    async stop() {
-      child.kill('SIGTERM');
-      await new Promise((r) => { child.on('exit', r); setTimeout(r, 3000); });
+    /** Stops the server and drops its database, unless `keepDatabase` is set. */
+    async stop({ keepDatabase = false } = {}) {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGTERM');
+        await new Promise((r) => { child.on('exit', r); setTimeout(r, 3000); });
+      }
+      if (keepDatabase) return;
       try {
         psql(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
       } catch { /* leave it; the name is unique per run */ }

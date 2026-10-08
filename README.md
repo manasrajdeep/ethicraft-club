@@ -61,8 +61,9 @@ Generate a session secret with:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Changing `ADMIN_PASSWORD` and restarting re-hashes the stored password, so that
-is also how you rotate the admin credentials.
+To rotate the admin credentials, change `ADMIN_USERNAME` and/or
+`ADMIN_PASSWORD` and restart. The new password is hashed, any account under a
+different username is removed, and everyone is signed out.
 
 For a local database, start Postgres and create the database `.env.example`
 points at. The app creates its own tables on first run.
@@ -346,8 +347,9 @@ npm run test:responsive
 Drives a real Chromium across 11 device viewports (320px Galaxy Fold through
 1920px desktop) on three pages, failing on horizontal overflow, elements that
 escape the viewport, tap targets under 24px, and text under 11px. It boots its
-own throwaway server; to audit one that is already running, pass its URL:
-`npm run test:responsive -- http://localhost:3000`.
+own throwaway server. To audit one that is already running, pass its URL, then
+its login page (left out otherwise, since the admin path is secret):
+`npm run test:responsive -- http://localhost:3000 /admin/login`.
 
 ```bash
 npm run test:e2e
