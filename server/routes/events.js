@@ -162,15 +162,17 @@ router.get('/posters/:id', async (req, res, next) => {
     const row = rows[0];
     if (!row) return res.status(404).end();
 
-    // Cheap revalidation: the poster only changes when the row does.
-    const etag = `"p${id}-${new Date(row.updated_at).getTime()}"`;
-    if (req.headers['if-none-match'] === etag) return res.status(304).end();
-
+    // The ?v= in the URL is the row's updated_at, so the URL changes whenever
+    // the poster can. That exact URL is safe to cache for a year; a missing or
+    // out-of-date version revalidates instead, cheaply, against the ETag.
+    const version = String(new Date(row.updated_at).getTime());
+    const etag = `"p${id}-${version}"`;
     res.setHeader('Content-Type', row.poster_type || 'image/jpeg');
     res.setHeader('Content-Disposition', 'inline');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cache-Control', req.query.v === version ? 'public, max-age=31536000, immutable' : 'no-cache');
     res.setHeader('ETag', etag);
+    if (req.headers['if-none-match'] === etag) return res.status(304).end();
     res.send(row.poster_data);
   } catch (err) {
     next(err);

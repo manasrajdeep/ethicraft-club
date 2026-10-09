@@ -20,7 +20,7 @@ const POSTER = path.join(ROOT, 'assets-seed', 'alumni-tales.jpg');
 const OTHER_POSTER = path.join(ROOT, 'public', 'assets', 'logo.png');
 // 1600px wide: bigger than the 1440px the gallery stores, so the upload shows
 // whether the browser really resized it.
-const BIG_PHOTO = path.join(ROOT, 'public', 'assets', 'hero-bg.jpg');
+const BIG_PHOTO = path.join(ROOT, 'test', 'fixtures', 'big-photo.jpg');
 const REGISTER = 'https://tinyurl.com/ethicraftpict';
 
 let failures = 0;
@@ -196,7 +196,7 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
         .filter((img) => getComputedStyle(img).display !== 'none').map((img) => img.getAttribute('src')));
       const theme = await home.evaluate(() => document.documentElement.dataset.theme);
       const first = await shown();
-      const expected = `/assets/logo-${theme === 'dark' ? 'night' : 'day'}.png`;
+      const expected = `/assets/logo-${theme === 'dark' ? 'night' : 'day'}.webp`;
       assert(first.length === 1 && first[0] === expected, `${theme} theme shows ${JSON.stringify(first)}`);
       await (await visible(home, '[data-theme-toggle]')).click();
       const flipped = await shown();
@@ -249,6 +249,32 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       await home.waitForSelector('#lightbox.hidden');
       const p = await homeProblems();
       assert(!p.length, p.join('\n'));
+    });
+
+    await check('the lightbox keeps keyboard focus inside, and hands it back on close', async () => {
+      const tile = await home.$('#galleryGrid .js-photo:nth-child(2)');
+      await tile.focus();
+      await home.keyboard.press('Enter');
+      await home.waitForSelector('#lightbox:not(.hidden)');
+      const focused = () => home.evaluate(() => document.activeElement.id || document.activeElement.tagName);
+      const shiftTab = async () => {
+        await home.keyboard.down('Shift');
+        await home.keyboard.press('Tab');
+        await home.keyboard.up('Shift');
+      };
+      assert(await focused() === 'lightboxClose', `opened with focus on ${await focused()}`);
+      const order = [];
+      for (let i = 0; i < 4; i++) {
+        await home.keyboard.press('Tab');
+        order.push(await focused());
+      }
+      assert(order.join(' ') === 'lightboxPrev lightboxNext lightboxClose lightboxPrev', `Tab went ${order.join(' → ')}`);
+      await shiftTab();
+      await shiftTab();
+      assert(await focused() === 'lightboxNext', `Shift+Tab from the first button went to ${await focused()}`);
+      await home.keyboard.press('Escape');
+      await home.waitForSelector('#lightbox.hidden');
+      assert(await home.evaluate((el) => document.activeElement === el, tile), 'focus did not return to the photo');
     });
 
     await check('"Join the club" and "Register now" open the registration form in a new tab', async () => {
@@ -305,6 +331,22 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       assert(/Published/.test(row.text) && /Past/.test(row.text), row.text);
       const s = await stats();
       assert(s === '1/0/0', `published/drafts/upcoming = ${s}`);
+    });
+
+    await check('the drawer keeps keyboard focus inside, and Escape hands it back', async () => {
+      await admin.focus('#newEventBtn');
+      await admin.keyboard.press('Enter');
+      await admin.waitForSelector('#drawer:not(.hidden)');
+      assert(await admin.evaluate(() => document.activeElement?.id) === 'title', 'the title field should take focus');
+      for (let i = 1; i <= 40; i++) {
+        await admin.keyboard.press('Tab');
+        assert(await admin.evaluate(() => document.querySelector('#drawer').contains(document.activeElement)),
+          `focus left the open drawer after ${i} Tabs`);
+      }
+      await admin.keyboard.press('Escape');
+      await admin.waitForSelector('#drawer.hidden');
+      assert(await admin.evaluate(() => document.activeElement?.id) === 'newEventBtn',
+        'focus did not return to "New event"');
     });
 
     let id;
@@ -521,6 +563,13 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
     await check('Delete asks first: Cancel keeps the event, Confirm removes it and its poster', async () => {
       await admin.click(`#eventList [data-action="delete"][data-id="${id}"]`);
       await admin.waitForSelector('#confirm:not(.hidden)');
+      // Focus starts on Cancel, so a stray Enter cannot delete, and Tab stays in the box.
+      assert(await admin.evaluate(() => document.activeElement?.id) === 'confirmCancel', 'the box should open on Cancel');
+      for (let i = 1; i <= 3; i++) {
+        await admin.keyboard.press('Tab');
+        assert(await admin.evaluate(() => document.querySelector('#confirm').contains(document.activeElement)),
+          `focus left the confirm box after ${i} Tabs`);
+      }
       await admin.click('#confirmCancel');
       await admin.waitForSelector('#confirm.hidden');
       assert(await admin.$(`#eventList [data-id="${id}"]`), 'the event vanished after Cancel');
@@ -740,6 +789,38 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       }
     });
 
+    await check('pages hold still while their data loads, on a slow connection (CLS under 0.1)', async () => {
+      const shifts = [];
+      for (const [where, viewport] of [
+        ['/calendar', { width: 390, height: 844 }], ['/calendar', { width: 1280, height: 800 }],
+        ['/', { width: 390, height: 844 }], ['/', { width: 1280, height: 800 }],
+      ]) {
+        const page = await ctx.newPage();
+        try {
+          await page.setViewport(viewport);
+          // A phone on a middling connection: data that lands after the first
+          // paint is what makes a page jump.
+          const cdp = await page.createCDPSession();
+          await cdp.send('Network.emulateNetworkConditions', {
+            offline: false, latency: 150, downloadThroughput: 1.6e6 / 8, uploadThroughput: 750e3 / 8,
+          });
+          await page.evaluateOnNewDocument(() => {
+            window.__cls = 0;
+            new PerformanceObserver((list) => {
+              for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__cls += entry.value;
+            }).observe({ type: 'layout-shift', buffered: true });
+          });
+          await page.goto(`${base}${where}`, { waitUntil: 'networkidle0', timeout: 60000 });
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const cls = await page.evaluate(() => window.__cls);
+          if (cls >= 0.1) shifts.push(`${where} at ${viewport.width}px: ${cls.toFixed(3)}`);
+        } finally {
+          await page.close();
+        }
+      }
+      assert(!shifts.length, `layout shift: ${shifts.join(', ')}`);
+    });
+
     await check('on a 375px phone the nav menu opens and closes, with no errors', async () => {
       const page = await ctx.newPage();
       const problems = await instrument(page, base, { viewport: { width: 375, height: 667, isMobile: true, hasTouch: true } });
@@ -749,6 +830,12 @@ async function instrument(page, base, { timezone = 'Asia/Kolkata', viewport = { 
       await page.waitForSelector('#mobileMenu:not(.hidden)');
       assert(await page.$eval('#navToggle', (el) => el.getAttribute('aria-expanded')) === 'true', 'aria-expanded not updated');
       await shot(page, 'mobile-menu');
+      await page.keyboard.press('Escape');
+      await page.waitForSelector('#mobileMenu.hidden');
+      assert(await page.evaluate(() => document.activeElement?.id) === 'navToggle',
+        'Escape should hand focus back to the menu button');
+      await page.tap('#navToggle');
+      await page.waitForSelector('#mobileMenu:not(.hidden)');
       await page.tap('#navToggle');
       await page.waitForSelector('#mobileMenu.hidden');
       const p = await problems();

@@ -2,6 +2,7 @@
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { clientKey } = require('../client-ip');
 const {
   verifyCredentials,
   requireAuth,
@@ -20,6 +21,7 @@ const router = express.Router();
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
+  keyGenerator: clientKey,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,

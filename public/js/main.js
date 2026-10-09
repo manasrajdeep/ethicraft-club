@@ -23,8 +23,8 @@
     + 'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
 
   /** Both logos; the theme shows one (see .ec-logo-day in styles.css). */
-  const logo = (cls) => `<img src="/assets/logo-day.png" alt="" class="ec-logo-day ${cls}" />`
-    + `<img src="/assets/logo-night.png" alt="" class="ec-logo-night ${cls}" />`;
+  const logo = (cls) => `<img src="/assets/logo-day.webp" alt="" class="ec-logo-day ${cls}" />`
+    + `<img src="/assets/logo-night.webp" alt="" class="ec-logo-night ${cls}" />`;
 
   /** '2026-09-16' -> { day: '16', month: 'Sep', weekday: 'Wednesday', full: '16 Sept 2026' } */
   function formatDate(iso) {
@@ -231,7 +231,7 @@
     const extra = topics.length - shown.length;
     return `<ul class="mt-4 flex flex-wrap gap-1.5">
       ${shown.map((t) => `<li class="ec-chip bg-surface2 text-ink/75">${esc(t)}</li>`).join('')}
-      ${extra > 0 ? `<li class="ec-chip bg-surface2 text-ink/50">+${extra} more</li>` : ''}
+      ${extra > 0 ? `<li class="ec-chip bg-surface2 text-ink/70">+${extra} more</li>` : ''}
     </ul>`;
   }
 
@@ -239,7 +239,6 @@
   function specRow(key, value) {
     return `<div class="ec-spec">
       <dt class="ec-spec-key">${esc(key)}</dt>
-      <span class="ec-spec-dots" aria-hidden="true"></span>
       <dd class="ec-spec-val">${esc(value)}</dd>
     </div>`;
   }
@@ -285,10 +284,10 @@
       : '';
 
     const action = isPast
-      ? `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/40">Session concluded</span>`
+      ? `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/70">Session concluded</span>`
       : (register || join)
         ? `${register}${join}`
-        : `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/50">Joining details coming soon</span>`;
+        : `<span class="inline-flex items-center gap-2 text-sm font-semibold text-ink/70">Joining details coming soon</span>`;
 
     return `
       <article class="ec-card ec-bracket ec-reveal flex flex-col overflow-hidden text-ink ${isPast ? 'opacity-90' : ''} ${wide
@@ -298,8 +297,8 @@
           <div class="flex items-start gap-4">
             <div class="shrink-0 rounded-xl bg-surface2 px-3 py-2 text-center">
               <span class="block font-display text-2xl font-black leading-none text-ink">${date.day}</span>
-              <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-brand">${date.month}</span>
-              ${until ? `<span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.06em] text-ink/50">to ${until.day} ${until.month}</span>` : ''}
+              <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-[0.12em] ec-date-accent">${date.month}</span>
+              ${until ? `<span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.06em] text-ink/70">to ${until.day} ${until.month}</span>` : ''}
             </div>
             <div class="min-w-0">
               <span class="ec-chip ${modeClass}">${esc(event.mode)}</span>
@@ -391,14 +390,14 @@
     const cell = (value, label) => `
       <div class="text-center">
         <div class="ec-digit rounded-lg bg-white/10 px-2.5 py-2 text-2xl font-bold text-white ring-1 ring-inset ring-white/15 sm:text-3xl">${value}</div>
-        <div class="ec-label mt-1.5 text-ondeep/45">${label}</div>
+        <div class="ec-label mt-1.5 text-ondeep/60">${label}</div>
       </div>`;
 
     const tick = () => {
       const now = Date.now();
 
       if (now >= end.getTime()) {
-        host.innerHTML = `<p class="ec-label text-ondeep/50">${isMultiDay(event) ? 'PROGRAMME CONCLUDED' : 'SESSION CONCLUDED'}</p>`;
+        host.innerHTML = `<p class="ec-label text-ondeep/60">${isMultiDay(event) ? 'PROGRAMME CONCLUDED' : 'SESSION CONCLUDED'}</p>`;
         clearInterval(countdownTimer);
         return;
       }
@@ -412,7 +411,7 @@
 
       const { days, hours, minutes, seconds } = splitDuration(start.getTime() - now);
       host.innerHTML = `
-        <p class="ec-label mb-2.5 text-ondeep/45">STARTS IN</p>
+        <p class="ec-label mb-2.5 text-ondeep/60">STARTS IN</p>
         <div class="grid grid-cols-4 gap-2">
           ${cell(days, 'DAYS')}${cell(hours, 'HRS')}${cell(minutes, 'MIN')}${cell(seconds, 'SEC')}
         </div>`;
@@ -438,7 +437,7 @@
     ];
 
     host.innerHTML = cells.map(([key, value]) => `
-      <span class="ec-label text-ink/40">
+      <span class="ec-label text-ink/70">
         ${key} <span class="ml-1.5 font-semibold text-ink/75">${esc(value)}</span>
       </span>`).join('');
   }
@@ -468,11 +467,11 @@
             <span class="ec-label flex items-center gap-2 text-amber-brand">
               <span class="ec-status text-amber-brand"></span> ${kicker}
             </span>
-            <span class="ec-label text-ondeep/35">EC-${String(event.id).padStart(3, '0')}</span>
+            <span class="ec-label text-ondeep/60">EC-${String(event.id).padStart(3, '0')}</span>
           </div>
 
           <h2 class="mt-3 font-display text-2xl font-bold leading-snug text-white">${esc(event.title)}</h2>
-          <p class="ec-label mt-2 text-ondeep/55">
+          <p class="ec-label mt-2 text-ondeep/70">
             ${esc(formatRange(event, true).toUpperCase())} · ${esc(timeRange(event).toUpperCase())} · ${esc((event.mode === 'Zoom' ? 'Zoom' : locationLabel(event)).toUpperCase())}
           </p>
 
@@ -547,7 +546,7 @@
       const on = tab.dataset.scope === activeScope;
       tab.setAttribute('aria-selected', String(on));
       tab.className = `ec-tab rounded-full px-5 py-2 text-sm font-semibold transition ${
-        on ? 'bg-deep text-white shadow-sm' : 'text-ink/60 hover:text-ink'
+        on ? 'bg-deep text-white shadow-sm' : 'text-ink/75 hover:text-ink'
       }`;
     });
   }
@@ -628,9 +627,11 @@
       </div>`;
     host.innerHTML = track(false) + track(true);
 
-    // A steady pace whatever the number of photos: about 40px a second.
-    const width = host.firstElementChild.getBoundingClientRect().width;
-    host.style.setProperty('--strip-duration', `${Math.max(30, Math.round(width / 40))}s`);
+    // The CSS turns these into a steady pace whatever the photos. Measuring the
+    // track instead would force a layout of the whole page in the middle of loading.
+    const ratios = items.reduce((sum, p) => sum + (Number(p.width) / Number(p.height) || 1.5), 0);
+    host.style.setProperty('--strip-ratios', ratios.toFixed(3));
+    host.style.setProperty('--strip-count', String(items.length));
   }
 
   /**
@@ -774,6 +775,23 @@
 
   const lightboxOpen = () => lightbox && !lightbox.classList.contains('hidden');
 
+  /** Keeps Tab inside an open dialog, cycling through its visible controls. */
+  function trapTab(e, container) {
+    const stops = $$('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])', container)
+      .filter((el) => !el.disabled && el.getClientRects().length);
+    if (!stops.length) return;
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const inside = container.contains(document.activeElement);
+    if (e.shiftKey && (!inside || document.activeElement === first)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   document.addEventListener('click', (e) => {
     const ics = e.target.closest('.js-ics');
     if (ics) {
@@ -805,6 +823,7 @@
   document.addEventListener('keydown', (e) => {
     if (!lightboxOpen()) return;
     if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'Tab') trapTab(e, lightbox);
     else if (lightboxItems.length > 1 && e.key === 'ArrowLeft') showLightboxItem(lightboxIndex - 1);
     else if (lightboxItems.length > 1 && e.key === 'ArrowRight') showLightboxItem(lightboxIndex + 1);
   });
@@ -855,6 +874,11 @@
   }
   toggle?.addEventListener('click', () => setMenu(menu?.classList.contains('hidden')));
   menu?.addEventListener('click', (e) => { if (e.target.tagName === 'A') setMenu(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || toggle?.getAttribute('aria-expanded') !== 'true') return;
+    setMenu(false);
+    toggle.focus();
+  });
 
   $$('.ec-tab').forEach((tab) => tab.addEventListener('click', () => loadEvents(tab.dataset.scope)));
 

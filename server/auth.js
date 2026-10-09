@@ -2,9 +2,10 @@
 
 const bcrypt = require('bcryptjs');
 const { query } = require('./db');
+const { clientKey } = require('./client-ip');
 
 /**
- * Per-IP failure counter, layered under the rate limiter in routes/admin.js.
+ * Per-visitor failure counter, layered under the rate limiter in routes/admin.js.
  * In-memory by design: a free instance restarts often, and losing the counter
  * on restart is acceptable because the network-level limiter still applies.
  */
@@ -12,9 +13,8 @@ const MAX_ATTEMPTS = 8;
 const LOCKOUT_MS = 15 * 60 * 1000;
 const attempts = new Map();
 
-function attemptKey(req) {
-  return req.ip || req.connection?.remoteAddress || 'unknown';
-}
+// The visitor, not the proxy in front of them: see client-ip.js.
+const attemptKey = clientKey;
 
 function isLockedOut(req) {
   const record = attempts.get(attemptKey(req));

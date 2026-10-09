@@ -94,14 +94,14 @@
     const s = parts(entry.startDate);
     if (!entry.endDate) {
       return `<span class="block font-display text-2xl font-black leading-none">${s.d}</span>
-              <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-brand">${s.weekday}</span>`;
+              <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.12em] ec-date-accent">${s.weekday}</span>`;
     }
     const e = parts(entry.endDate);
     return e.m === s.m
       ? `<span class="block font-display text-xl font-black leading-none">${s.d}–${e.d}</span>
-         <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-brand">${SHORT[s.m - 1]}</span>`
+         <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.12em] ec-date-accent">${SHORT[s.m - 1]}</span>`
       : `<span class="block font-display text-xl font-black leading-none">${s.d}</span>
-         <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.06em] text-magenta-brand">to ${e.d} ${SHORT[e.m - 1]}</span>`;
+         <span class="mt-1 block text-[11px] font-bold uppercase tracking-[0.06em] ec-date-accent">to ${e.d} ${SHORT[e.m - 1]}</span>`;
   }
 
   function row(entry, next) {
@@ -126,7 +126,7 @@
               ${entry.link ? `<a href="${esc(entry.link)}" target="_blank" rel="noopener noreferrer"
                                  class="ec-taplink text-sm font-bold text-sky-dark hover:underline">Details ↗</a>` : ''}
             </div>
-            ${time ? `<p class="ec-label mt-2 shrink-0 text-ink/55 sm:mt-1.5 sm:text-right">${esc(time.toUpperCase())}</p>` : ''}
+            ${time ? `<p class="ec-label mt-2 shrink-0 text-ink/70 sm:mt-1.5 sm:text-right">${esc(time.toUpperCase())}</p>` : ''}
           </div>
         </div>
       </li>`;
@@ -146,7 +146,8 @@
       ['NEXT', next ? `${parts(next.startDate).d} ${SHORT[parts(next.startDate).m - 1]}`.toUpperCase() : '—'],
     ];
     host.innerHTML = cells.map(([key, value]) => `
-      <span class="ec-label text-ondeep/45">${key} <span class="ml-1.5 font-semibold text-white">${esc(value)}</span></span>`).join('');
+      <span class="ec-label text-ondeep/60">${key} <span class="ml-1.5 font-semibold text-white">${esc(value)}</span></span>`).join('');
+    host.classList.remove('invisible');
   }
 
   let countdownTimer = null;
@@ -170,7 +171,7 @@
               <span class="ec-status text-amber-brand"></span> ${todays ? 'ON TODAY' : 'NEXT UP'}
             </p>
             <p class="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">${esc(entry.title)}</p>
-            <p class="ec-label mt-3 text-ondeep/60">${esc(dateText(entry))}${time ? ` · ${esc(time.toUpperCase())}` : ''}</p>
+            <p class="ec-label mt-3 text-ondeep/70">${esc(dateText(entry))}${time ? ` · ${esc(time.toUpperCase())}` : ''}</p>
             ${entry.details ? `<p class="mt-3 max-w-xl text-sm leading-relaxed text-ondeep/75">${esc(entry.details)}</p>` : ''}
             ${entry.label ? `<span class="ec-chip mt-4 bg-white/10 text-white ring-1 ring-inset ring-white/15">
               <span class="ec-filter__dot"></span>${esc(entry.label)}</span>` : ''}
@@ -179,7 +180,7 @@
         </div>
         <div class="relative mt-8">
           <div class="flex items-center justify-between gap-4">
-            <span class="ec-label text-ondeep/50">THE YEAR SO FAR</span>
+            <span class="ec-label text-ondeep/60">THE YEAR SO FAR</span>
             <span class="ec-label text-ondeep/70">${pad(done)} OF ${pad(inYear.length)} DONE</span>
           </div>
           <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -195,7 +196,7 @@
     const cell = (value, label) => `
       <div class="text-center">
         <div class="ec-digit rounded-lg bg-white/10 px-3 py-2 text-2xl font-bold ring-1 ring-inset ring-white/15 sm:text-3xl">${value}</div>
-        <div class="ec-label mt-1.5 text-ondeep/45">${label}</div>
+        <div class="ec-label mt-1.5 text-ondeep/60">${label}</div>
       </div>`;
     const tick = () => {
       const ms = startsAt(entry).getTime() - Date.now();
@@ -225,7 +226,7 @@
       </button>`;
     return `
       <div class="mt-8 flex flex-wrap items-center gap-2" role="group" aria-label="Show one track">
-        <span class="ec-label mr-2 text-ink/45">SHOW</span>
+        <span class="ec-label mr-2 text-ink/70">SHOW</span>
         ${chip('', inYear.length, 'All')}
         ${[...counts].map(([label, count]) => chip(label, count, label)).join('')}
       </div>`;
@@ -250,7 +251,7 @@
         <section class="mt-14 first:mt-0" aria-labelledby="month-${key}">
           <div class="flex items-baseline justify-between gap-4 border-b border-line pb-3">
             <h2 id="month-${key}" class="font-display text-2xl font-bold tracking-tight sm:text-3xl">${MONTHS[m - 1]} ${y}</h2>
-            <span class="ec-label text-ink/40">${pad(items.length)} ${items.length === 1 ? 'ENTRY' : 'ENTRIES'}</span>
+            <span class="ec-label text-ink/70">${pad(items.length)} ${items.length === 1 ? 'ENTRY' : 'ENTRIES'}</span>
           </div>
           <ol class="ec-timeline mt-6 space-y-3">${items.map((entry) => row(entry, next)).join('')}</ol>
         </section>`;
@@ -274,8 +275,8 @@
   function emptyState() {
     root.innerHTML = `
       <div class="rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-        <img src="/assets/logo-day.png" alt="" class="ec-logo-day mx-auto h-14 w-14 opacity-50" />
-        <img src="/assets/logo-night.png" alt="" class="ec-logo-night mx-auto h-14 w-14 opacity-50" />
+        <img src="/assets/logo-day.webp" alt="" class="ec-logo-day mx-auto h-14 w-14 opacity-50" />
+        <img src="/assets/logo-night.webp" alt="" class="ec-logo-night mx-auto h-14 w-14 opacity-50" />
         <h2 class="mt-4 font-display text-xl font-bold">The schedule is on its way</h2>
         <p class="mx-auto mt-2 max-w-sm text-sm text-muted">This year's sessions will be listed here as soon as the club team publishes them.</p>
       </div>`;
@@ -289,6 +290,8 @@
       ({ entries } = await res.json());
     } catch (err) {
       console.error(err);
+      $('#calStats')?.replaceChildren();
+      $('#calOverview')?.replaceChildren();
       root.innerHTML = `
         <p class="rounded-2xl bg-surface px-6 py-10 text-center text-muted ring-1 ring-line">
           We couldn't load the calendar. Please refresh the page, or email ethicraft.pict25@gmail.com.
@@ -299,6 +302,9 @@
     }
 
     if (!entries.length) {
+      // Nothing to count or spotlight: drop both placeholders.
+      $('#calStats')?.replaceChildren();
+      $('#calOverview')?.replaceChildren();
       emptyState();
       return;
     }

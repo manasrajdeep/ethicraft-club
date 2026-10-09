@@ -74,6 +74,35 @@
     body: JSON.stringify(payload),
   });
 
+  /* ------------------------------------------------------------ dialogs */
+
+  /** Keeps Tab inside an open dialog, cycling through its visible controls. */
+  function trapTab(e, container) {
+    const stops = [...container.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter((el) => !el.disabled && el.getClientRects().length);
+    if (!stops.length) return;
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const inside = container.contains(document.activeElement);
+    if (e.shiftKey && (!inside || document.activeElement === first)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  // Whatever had focus when each dialog opened, so closing it can hand focus
+  // back. A row re-rendered while the dialog was open is skipped.
+  const focusBefore = new Map();
+  const rememberFocus = (dialog) => focusBefore.set(dialog, document.activeElement);
+  function restoreFocus(dialog) {
+    const el = focusBefore.get(dialog);
+    focusBefore.delete(dialog);
+    if (el?.isConnected) el.focus();
+  }
+
   /* ------------------------------------------------------------ confirm */
 
   let confirmResolve = null;
@@ -81,13 +110,16 @@
     $('#confirmTitle').textContent = title;
     $('#confirmBody').textContent = body;
     $('#confirmOk').textContent = okLabel;
+    rememberFocus('confirm');
     $('#confirm').classList.remove('hidden');
     $('#confirm').classList.add('flex');
+    $('#confirmCancel').focus();   // the safe choice, for a stray Enter
     return new Promise((resolve) => { confirmResolve = resolve; });
   }
   function closeConfirm(result) {
     $('#confirm').classList.add('hidden');
     $('#confirm').classList.remove('flex');
+    restoreFocus('confirm');
     confirmResolve?.(result);
     confirmResolve = null;
   }
@@ -168,6 +200,7 @@
     }
 
     syncModeFields();
+    rememberFocus('drawer');
     drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     // Focus now, inside the click: a delayed focus could pull the cursor back
@@ -180,6 +213,7 @@
     drawer.classList.add('hidden');
     document.body.style.overflow = '';
     clearPosterPreview();
+    restoreFocus('drawer');
   }
 
   $('#newEventBtn').addEventListener('click', () => openDrawer());
@@ -299,8 +333,8 @@
     const thumb = event.posterPath
       ? `<img src="${esc(event.posterPath)}" alt="" class="h-20 w-14 shrink-0 rounded-lg object-cover ring-1 ring-line" />`
       : `<div class="grid h-20 w-14 shrink-0 place-items-center rounded-lg bg-surface2 ring-1 ring-line">
-           <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-7 w-7 opacity-50" />
-           <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-7 w-7 opacity-50" />
+           <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-7 w-7 opacity-50" />
+           <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-7 w-7 opacity-50" />
          </div>`;
 
     return `
@@ -311,7 +345,7 @@
             <div class="flex flex-wrap items-center gap-2">
               ${status}
               <span class="ec-chip bg-surface2 text-ink/70">${esc(event.mode)}</span>
-              ${isUpcoming ? '' : '<span class="ec-chip bg-surface2 text-ink/50">Past</span>'}
+              ${isUpcoming ? '' : '<span class="ec-chip bg-surface2 text-ink/70">Past</span>'}
             </div>
             <h3 class="mt-2 truncate font-display text-lg font-bold">${esc(event.title)}</h3>
             <p class="mt-0.5 text-sm text-muted">
@@ -417,6 +451,7 @@
     $('#entryEndTime').value = entry?.endTime ?? '';
     $('#entryDetails').value = entry?.details ?? '';
     $('#entryLink').value = entry?.link ?? '';
+    rememberFocus('calDrawer');
     calDrawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     $('#entryTitle').focus();   // now, not later: see openDrawer
@@ -425,6 +460,7 @@
   function closeCalDrawer() {
     calDrawer.classList.add('hidden');
     document.body.style.overflow = '';
+    restoreFocus('calDrawer');
   }
 
   $('#newEntryBtn').addEventListener('click', () => openCalDrawer());
@@ -472,7 +508,7 @@
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
             ${entry.label ? `<span class="ec-chip bg-surface2 text-ink/75">${esc(entry.label)}</span>` : ''}
-            ${past ? '<span class="ec-chip bg-surface2 text-ink/50">Past</span>' : ''}
+            ${past ? '<span class="ec-chip bg-surface2 text-ink/70">Past</span>' : ''}
           </div>
           <h3 class="mt-1.5 truncate font-display text-lg font-bold">${esc(entry.title)}</h3>
           <p class="mt-0.5 text-sm text-muted">${esc(formatDates(entry.startDate, entry.endDate))}${time ? ` · ${esc(time)}` : ''}</p>
@@ -743,10 +779,14 @@
   window.addEventListener('hashchange', () => showTab(window.location.hash.slice(1)));
 
   document.addEventListener('keydown', (e) => {
+    // The confirm box sits above a drawer, so it takes the keys first.
+    const open = [$('#confirm'), drawer, calDrawer].find((el) => !el.classList.contains('hidden'));
+    if (!open) return;
+    if (e.key === 'Tab') return trapTab(e, open);
     if (e.key !== 'Escape') return;
-    if (!$('#confirm').classList.contains('hidden')) return closeConfirm(false);
-    if (!drawer.classList.contains('hidden')) closeDrawer();
-    if (!calDrawer.classList.contains('hidden')) closeCalDrawer();
+    if (open.id === 'confirm') closeConfirm(false);
+    else if (open === drawer) closeDrawer();
+    else closeCalDrawer();
   });
 
   /* -------------------------------------------------------------- logout */

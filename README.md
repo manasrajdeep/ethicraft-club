@@ -133,7 +133,8 @@ ethicraft-club/
 │   ├── helpers.js           # boots the real server against a throwaway database
 │   ├── app.test.js          # integration tests (npm test)
 │   ├── responsive-audit.js  # layout audit across device viewports
-│   └── e2e.js               # drives the real UI in headless Chromium
+│   ├── e2e.js               # drives the real UI in headless Chromium
+│   └── fixtures/            # a large photo, to test in-browser resizing
 │
 ├── deploy-vps-alternative/  # for running on your own server instead of Render
 │   ├── ethicraft.service    # hardened systemd unit
@@ -162,10 +163,13 @@ ethicraft-club/
     │   ├── admin.js         # dashboard: events, calendar, gallery uploads
     │   └── theme.js         # day/night toggle
     └── assets/
-        ├── logo-day.png     # background-free logos, one per theme
-        ├── logo-night.png
-        ├── logo.png         # favicon and link previews
-        └── hero-bg.jpg      # hero background
+        ├── logo-day.webp    # background-free logos, one per theme
+        ├── logo-night.webp
+        ├── logo.png         # link previews (og:image)
+        ├── favicon.png      # tab icon, 48px
+        ├── apple-touch-icon.png
+        ├── hero-bg-960.webp # hero background, phones
+        └── hero-bg-1600.webp# hero background, tablets and up
 ```
 
 Posters and gallery photos are stored in the database, not on disk (see below).
@@ -358,9 +362,14 @@ npm run build          # or: npm run build:watch while editing
 `views/index.html`, marked with comments. Edit them directly. Events, the FY
 calendar and the gallery are managed from the dashboard instead.
 
-**Logo** — `public/assets/logo-day.png` and `logo-night.png` have no background,
+**Logo** — `public/assets/logo-day.webp` and `logo-night.webp` have no background,
 so they sit cleanly on any band; the page shows the one that matches the theme.
-Replace both together, as square PNGs with transparency.
+Replace both together, as square 160px WebPs with transparency (both load on
+every page, so keep each under 20 KB): `cwebp -q 88 -alpha_q 100 logo.png -o logo-day.webp`.
+
+**Hero photo** — `hero-bg-960.webp` serves phones and `hero-bg-1600.webp` everything
+wider. The breakpoint appears twice, in `.ec-hero-photo` in `styles.css` and in the
+preload links in `views/index.html`; change both together, or the photo downloads twice.
 
 **Why `views/` is separate from `public/`** — `public/` is served by
 `express.static`, so anything in it is reachable by anyone. Keeping the HTML in

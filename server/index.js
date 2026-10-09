@@ -15,6 +15,7 @@ const PgSession = require('connect-pg-simple')(session);
 
 const { pool, query, migrate, ensureAdminUser, close, describeError } = require('./db');
 const { requireAuthPage } = require('./auth');
+const { clientKey } = require('./client-ip');
 const adminRoutes = require('./routes/admin');
 const { router: eventRoutes } = require('./routes/events');
 const { router: photoRoutes } = require('./routes/photos');
@@ -125,6 +126,7 @@ app.use(session({
 app.use('/api/', rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
+  keyGenerator: clientKey,   // per visitor, not per Cloudflare address: see client-ip.js
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please slow down.' },
@@ -162,8 +164,22 @@ const sendPage = (name) => (_req, res) => {
   res.type('html').set('Cache-Control', 'no-cache').send(renderPage(name));
 };
 
+// The calendar heading names the academic year (July to June, in IST). It is
+// filled in here so the heading is whole on first paint: left to the script,
+// it grew a line on phones and shoved the page down. The script still changes
+// it when someone picks another year, or this one has no entries yet.
+function academicYearLabel(now = new Date()) {
+  const [y, m] = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' })
+    .format(now).split('-').map(Number);
+  const start = m >= 7 ? y : y - 1;
+  return `${start}–${String(start + 1).slice(2)}`;
+}
+
 app.get('/', sendPage('index.html'));
-app.get('/calendar', sendPage('calendar.html'));
+app.get('/calendar', (_req, res) => {
+  res.type('html').set('Cache-Control', 'no-cache')
+    .send(renderPage('calendar.html').replaceAll('{{ACADEMIC_YEAR}}', academicYearLabel()));
+});
 
 app.get(LOGIN_PATH, (req, res) => {
   if (req.session?.admin) return res.redirect(ADMIN_PATH);

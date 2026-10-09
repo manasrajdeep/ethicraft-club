@@ -11,6 +11,10 @@ ethicraft.in, www.ethicraft.in {
 
 	reverse_proxy 127.0.0.1:3000 {
 		header_up X-Real-IP {remote_host}
+		# The app trusts this header for rate limits, because Cloudflare sets it
+		# on Render. Here nothing does, so drop any copy a visitor sends. (If you
+		# put Cloudflare in front of this server, delete this line.)
+		header_up -CF-Connecting-IP
 	}
 
 	header {

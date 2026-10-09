@@ -9,8 +9,8 @@
 <link rel="canonical" href="https://ethicraft.in/" />
 <meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
-<link rel="icon" href="/assets/logo.png" />
-<link rel="apple-touch-icon" href="/assets/logo.png" />
+<link rel="icon" href="/assets/favicon.png" sizes="48x48" type="image/png" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 
 <meta name="keywords" content="EthiCraft Club, EthiCraft PICT, PICT Pune, PICT clubs, student club Pune, life skills club Pune, personality development PICT, wisdom sessions, VIBE module, IMPACT module, Pune Institute of Computer Technology" />
 <meta name="author" content="The EthiCraft Club, PICT" />
@@ -57,6 +57,11 @@
 <!-- Tailwind is compiled at build time into app.css. The Play CDN used to
      do this in the browser, which left phones on mobile data rendering an
      unstyled, overflowing page until the compiler finished downloading. -->
+<!-- The hero photo is a CSS background, so the browser would only find it
+     once the stylesheets had loaded. These fetch it up front; the breakpoint
+     must match .ec-hero-photo in styles.css. -->
+<link rel="preload" as="image" href="/assets/hero-bg-960.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
+<link rel="preload" as="image" href="/assets/hero-bg-1600.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -257,11 +262,11 @@
 <header id="nav" class="ec-nav fixed inset-x-0 top-0 z-50">
   <nav class="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-3.5 lg:px-10" aria-label="Main">
     <a href="#top" class="flex items-center gap-3">
-      <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-11 w-11 shrink-0" width="44" height="44" />
-      <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-11 w-11 shrink-0" width="44" height="44" />
+      <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-11 w-11 shrink-0" width="44" height="44" />
+      <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-11 w-11 shrink-0" width="44" height="44" />
       <span class="leading-none">
         <span class="ec-nav-ink block font-display text-[1.35rem] font-bold tracking-tight text-ink">EthiCraft</span>
-        <span class="ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
+        <span class="ec-nav-accent ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
       </span>
     </a>
 
@@ -330,8 +335,7 @@
 </section>
 
 <!-- ============================================================= HERO -->
-<section id="intro" class="ec-hero-photo relative isolate overflow-hidden pt-12 pb-0 sm:pt-16"
-         style="--hero-src: url('/assets/hero-bg.jpg')">
+<section id="intro" class="ec-hero-photo relative isolate overflow-hidden pt-12 pb-0 sm:pt-16">
   <div class="ec-mesh" aria-hidden="true"></div>
   <div class="ec-blob h-64 w-64 bg-sky-brand" style="top:-4rem; right:-3rem;"></div>
   <div class="ec-blob h-72 w-72 bg-magenta-brand" style="bottom:2rem; left:-5rem; animation-delay:-5s;"></div>
@@ -348,7 +352,7 @@
             <span class="ec-status text-amber-brand"></span> EST. AT PICT, PUNE
           </span>
           <span class="ec-label hidden sm:inline text-white/25">/</span>
-          <span class="ec-label hidden sm:inline text-white/45">CHAPTER OF ETHICRAFT PAN INDIA</span>
+          <span class="ec-label hidden sm:inline text-white/65">CHAPTER OF ETHICRAFT PAN INDIA</span>
         </div>
 
         <h1 class="mt-7 font-display font-black tracking-[-0.035em] text-white"
@@ -379,16 +383,16 @@
           <div class="ec-ticks text-white"></div>
           <dl class="grid grid-cols-3 gap-6 pt-5">
             <div>
-              <dt class="ec-label text-ondeep/45">Modules</dt>
+              <dt class="ec-label text-ondeep/65">Modules</dt>
               <dd class="ec-digit mt-1.5 whitespace-nowrap text-2xl font-bold text-white sm:text-3xl">02</dd>
             </div>
             <div>
-              <dt class="ec-label text-ondeep/45">Mentors</dt>
-              <dd class="ec-digit mt-1.5 whitespace-nowrap text-2xl font-bold text-white sm:text-3xl">IIT<span class="text-sm font-normal text-ondeep/55 sm:text-base">/IND</span></dd>
+              <dt class="ec-label text-ondeep/65">Mentors</dt>
+              <dd class="ec-digit mt-1.5 whitespace-nowrap text-2xl font-bold text-white sm:text-3xl">IIT<span class="text-sm font-normal text-ondeep/65 sm:text-base">/IND</span></dd>
             </div>
             <div>
-              <dt class="ec-label text-ondeep/45">Reach</dt>
-              <dd class="ec-digit mt-1.5 whitespace-nowrap text-2xl font-bold text-white sm:text-3xl">PAN<span class="text-sm font-normal text-ondeep/55 sm:text-base">/IN</span></dd>
+              <dt class="ec-label text-ondeep/65">Reach</dt>
+              <dd class="ec-digit mt-1.5 whitespace-nowrap text-2xl font-bold text-white sm:text-3xl">PAN<span class="text-sm font-normal text-ondeep/65 sm:text-base">/IN</span></dd>
             </div>
           </dl>
         </div>
@@ -444,7 +448,7 @@
       <div class="min-w-0">
         <p id="featuredKicker" class="ec-label flex items-center gap-2 text-amber-brand"></p>
         <h2 id="featuredTitle" class="mt-3 font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl"></h2>
-        <p id="featuredMeta" class="ec-label mt-2 text-ondeep/55"></p>
+        <p id="featuredMeta" class="ec-label mt-2 text-ondeep/65"></p>
       </div>
       <div id="featuredActions" class="flex flex-wrap items-center gap-2"></div>
     </div>
@@ -454,7 +458,7 @@
         <img id="featuredImg" src="" alt="" class="ec-feature-poster shadow-2xl ring-1 ring-white/15 transition duration-500 group-hover:scale-[1.01]" />
       </button>
     </div>
-    <p class="ec-label mt-5 flex items-center justify-center gap-2 text-ondeep/45">
+    <p class="ec-label mt-5 flex items-center justify-center gap-2 text-ondeep/60">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
       TAP THE POSTER TO VIEW IT FULL SCREEN
     </p>
@@ -471,7 +475,7 @@
     <div class="grid gap-10 lg:grid-cols-[22rem_1fr] lg:gap-20">
 
       <div class="ec-reveal lg:sticky lg:top-28 lg:self-start">
-        <p class="ec-index text-ink/45">01 <span class="text-ink/70">Charter</span></p>
+        <p class="ec-index text-ink/70">01 <span class="text-ink/70">Charter</span></p>
         <div class="ec-rule mt-4 w-16"></div>
         <h2 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
           Eight things<br />we are trying<br />to build in you.
@@ -480,7 +484,7 @@
           Our charter, in plain language. Every session, outing and workshop traces back
           to one of these eight lines.
         </p>
-        <p class="ec-label mt-8 text-ink/35">PICT · DHANKAWADI · PUNE 411043</p>
+        <p class="ec-label mt-8 text-ink/70">PICT · DHANKAWADI · PUNE 411043</p>
       </div>
 
       <ol class="ec-reveal">
@@ -560,7 +564,7 @@
 
   <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="ec-reveal max-w-3xl">
-      <p class="ec-index text-ondeep/40">02 <span class="text-ondeep/70">Programs</span></p>
+      <p class="ec-index text-ondeep/60">02 <span class="text-ondeep/70">Programs</span></p>
       <div class="ec-rule mt-4 w-16"></div>
       <h2 class="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">Two modules, one arc</h2>
       <p class="mt-5 text-lg leading-relaxed text-ondeep/70">
@@ -579,33 +583,21 @@
           <p class="mt-3 text-ondeep/65">Open to every member, from day one.</p>
 
           <dl class="mt-9 space-y-6">
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-book"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">Insight <span class="ec-label text-white/30">VIBE.01</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Wisdom sessions with leaders from IITs, IISc and global industry.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-sky-brand" aria-hidden="true"><use href="#i-book"/></svg>Insight <span class="ec-label text-white/60">VIBE.01</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Wisdom sessions with leaders from IITs, IISc and global industry.</dd>
             </div>
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-chevrons"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">Upskill <span class="ec-label text-white/30">VIBE.02</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Online bootcamps for tech and professional skills, plus enigmatic activities.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-sky-brand" aria-hidden="true"><use href="#i-chevrons"/></svg>Upskill <span class="ec-label text-white/60">VIBE.02</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Online bootcamps for tech and professional skills, plus enigmatic activities.</dd>
             </div>
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-tent"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">Escape <span class="ec-label text-white/30">VIBE.03</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Outings and festivals that build community and cultural appreciation.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-sky-brand" aria-hidden="true"><use href="#i-tent"/></svg>Escape <span class="ec-label text-white/60">VIBE.03</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Outings and festivals that build community and cultural appreciation.</dd>
             </div>
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-sky-brand" aria-hidden="true"><use href="#i-compass"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">Guide <span class="ec-label text-white/30">VIBE.04</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Mentorship circles for academics, coding and personal development.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-sky-brand" aria-hidden="true"><use href="#i-compass"/></svg>Guide <span class="ec-label text-white/60">VIBE.04</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Mentorship circles for academics, coding and personal development.</dd>
             </div>
           </dl>
         </div>
@@ -619,26 +611,17 @@
           <p class="mt-3 text-ondeep/65">Earned through participation, not sign-up.</p>
 
           <dl class="mt-9 space-y-6">
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-columns"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">Immersion <span class="ec-label text-white/30">IMP.01</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Physical workshops on IIT campuses — hands-on, in the room, for real.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-amber-brand" aria-hidden="true"><use href="#i-columns"/></svg>Immersion <span class="ec-label text-white/60">IMP.01</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Physical workshops on IIT campuses — hands-on, in the room, for real.</dd>
             </div>
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-hands"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">CCA credits <span class="ec-label text-white/30">IMP.02</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Social welfare work — tree plantation, food distribution and teaching.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-amber-brand" aria-hidden="true"><use href="#i-hands"/></svg>CCA credits <span class="ec-label text-white/60">IMP.02</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Social welfare work — tree plantation, food distribution and teaching.</dd>
             </div>
-            <div class="flex gap-4">
-              <svg class="ec-icon mt-0.5 shrink-0 text-amber-brand" aria-hidden="true"><use href="#i-loop"/></svg>
-              <div>
-                <dt class="flex items-baseline gap-2 font-semibold">VIBE 2.0 <span class="ec-label text-white/30">IMP.03</span></dt>
-                <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Everything VIBE offers, with expanded access and deeper engagement.</dd>
-              </div>
+            <div class="relative pl-10">
+              <dt class="flex items-baseline gap-2 font-semibold"><svg class="ec-icon absolute left-0 top-0.5 text-amber-brand" aria-hidden="true"><use href="#i-loop"/></svg>VIBE 2.0 <span class="ec-label text-white/60">IMP.03</span></dt>
+              <dd class="mt-1 text-sm leading-relaxed text-ondeep/65">Everything VIBE offers, with expanded access and deeper engagement.</dd>
             </div>
           </dl>
 
@@ -661,7 +644,7 @@
   <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="ec-reveal flex flex-wrap items-end justify-between gap-6">
       <div class="max-w-2xl">
-        <p class="ec-index text-ink/45">03 <span class="text-ink/70">Schedule</span></p>
+        <p class="ec-index text-ink/70">03 <span class="text-ink/70">Schedule</span></p>
         <div class="ec-rule mt-4 w-16"></div>
         <h2 class="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">What's on next</h2>
         <p class="mt-5 text-lg leading-relaxed text-muted">
@@ -687,7 +670,7 @@
 
   <div class="relative mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="ec-reveal max-w-2xl">
-      <p class="ec-index text-ondeep/40">04 <span class="text-ondeep/70">Gallery</span></p>
+      <p class="ec-index text-ondeep/60">04 <span class="text-ondeep/70">Gallery</span></p>
       <div class="ec-rule mt-4 w-16"></div>
       <h2 class="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">Where we have been</h2>
       <p class="mt-5 text-lg leading-relaxed text-ondeep/70">
@@ -704,7 +687,7 @@
   <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="ec-reveal grid gap-8 lg:grid-cols-[22rem_1fr] lg:gap-20">
       <div>
-        <p class="ec-index text-ink/45">05 <span class="text-ink/70">Mentors</span></p>
+        <p class="ec-index text-ink/70">05 <span class="text-ink/70">Mentors</span></p>
         <div class="ec-rule mt-4 w-16"></div>
         <h2 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
           The people<br />who show up<br />for us.
@@ -800,8 +783,8 @@
 
   <div class="relative mx-auto max-w-3xl px-5 text-center lg:px-10">
     <div class="ec-reveal mx-auto h-20 w-20">
-      <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-20 w-20" width="80" height="80" />
-      <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-20 w-20" width="80" height="80" />
+      <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-20 w-20" width="80" height="80" loading="lazy" decoding="async" />
+      <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-20 w-20" width="80" height="80" loading="lazy" decoding="async" />
     </div>
     <p class="ec-reveal ec-label mt-6 text-amber-brand">MEMBERSHIP OPEN</p>
     <h2 class="ec-reveal mt-4 font-display text-4xl font-bold tracking-tight sm:text-5xl">Want to join EthiCraft?</h2>
@@ -821,7 +804,7 @@
       </a>
     </div>
 
-    <p class="ec-reveal ec-label mt-8 text-ondeep/45">
+    <p class="ec-reveal ec-label mt-8 text-ondeep/60">
       ETHICRAFT.PICT25@GMAIL.COM · 98609 15506 / 70209 85163
     </p>
   </div>
@@ -834,8 +817,8 @@
   <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
       <div class="flex items-center gap-3">
-        <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-9 w-9" width="36" height="36" />
-        <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-9 w-9" width="36" height="36" />
+        <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-9 w-9" width="36" height="36" loading="lazy" decoding="async" />
+        <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-9 w-9" width="36" height="36" loading="lazy" decoding="async" />
         <span class="text-sm">The EthiCraft Club · Pune Institute of Computer Technology, Pune</span>
       </div>
       <div class="flex flex-wrap items-center gap-x-6 text-sm">
@@ -851,9 +834,9 @@
     <div class="ec-ticks mt-9 text-white"></div>
 
     <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-      <span class="ec-label text-ondeep/30">LEARN · CONNECT · GROW</span>
-      <span class="ec-label text-ondeep/30">DHANKAWADI, PUNE 411043</span>
-      <span id="buildMeta" class="ec-label text-ondeep/30"></span>
+      <span class="ec-label text-ondeep/60">LEARN · CONNECT · GROW</span>
+      <span class="ec-label text-ondeep/60">DHANKAWADI, PUNE 411043</span>
+      <span id="buildMeta" class="ec-label text-ondeep/60"></span>
     </div>
   </div>
 </footer>

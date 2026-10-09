@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>FY Calendar | EthiCraft Club PICT</title>
+<title>FY Calendar {{ACADEMIC_YEAR}} | EthiCraft Club PICT</title>
 <meta name="description" content="The EthiCraft Club PICT schedule for first-year students at Pune Institute of Computer Technology: every Wisdom Track and Technical Track session, with dates, times and the divisions attending." />
 <link rel="canonical" href="https://ethicraft.in/calendar" />
 <meta name="theme-color" content="#fdf9f0" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
-<link rel="icon" href="/assets/logo.png" />
-<link rel="apple-touch-icon" href="/assets/logo.png" />
+<link rel="icon" href="/assets/favicon.png" sizes="48x48" type="image/png" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 
 <meta property="og:site_name" content="EthiCraft Club PICT" />
 <meta property="og:type" content="website" />
@@ -64,11 +64,11 @@
 <header id="nav" class="ec-nav fixed inset-x-0 top-0 z-50">
   <nav class="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-3.5 lg:px-10" aria-label="Main">
     <a href="/" class="flex items-center gap-3">
-      <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-11 w-11 shrink-0" width="44" height="44" />
-      <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-11 w-11 shrink-0" width="44" height="44" />
+      <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-11 w-11 shrink-0" width="44" height="44" />
+      <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-11 w-11 shrink-0" width="44" height="44" />
       <span class="leading-none">
         <span class="ec-nav-ink block font-display text-[1.35rem] font-bold tracking-tight text-ink">EthiCraft</span>
-        <span class="ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
+        <span class="ec-nav-accent ec-label mt-1 block text-magenta-brand">PICT · PUNE</span>
       </span>
     </a>
 
@@ -126,7 +126,7 @@
       <span class="ec-status text-amber-brand"></span> ETHICRAFT PICT · FIRST YEAR
     </p>
     <h1 class="mt-6 font-display font-black tracking-[-0.03em]" style="font-size:clamp(2.75rem,7vw,5.5rem); line-height:.95">
-      FY Calendar <span id="calYearTitle" class="ec-gradient-text"></span>
+      FY Calendar <span id="calYearTitle" class="ec-gradient-text">{{ACADEMIC_YEAR}}</span>
     </h1>
     <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ondeep/75">
       Every session the club runs for first-year students this year, with times in IST and the
@@ -142,8 +142,15 @@
       <div id="calYears" class="flex flex-wrap gap-2" role="tablist" aria-label="Academic year"></div>
     </div>
 
-    <!-- The year at a glance, in the same mono strip as the homepage. -->
-    <div id="calStats" class="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/10 pt-6 empty:hidden"></div>
+    <!-- The year at a glance, in the same mono strip as the homepage. It ships as
+         an invisible placeholder of the same shape (the font is monospaced), so the
+         schedule below does not jump down when the numbers arrive. -->
+    <div id="calStats" class="invisible mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/10 pt-6 empty:hidden">
+      <span class="ec-label">ENTRIES <span class="ml-1.5 font-semibold">00</span></span>
+      <span class="ec-label">TRACKS <span class="ml-1.5 font-semibold">00</span></span>
+      <span class="ec-label">DONE <span class="ml-1.5 font-semibold">00 / 00</span></span>
+      <span class="ec-label">NEXT <span class="ml-1.5 font-semibold">00 OCT</span></span>
+    </div>
   </div>
 </section>
 <div class="ec-brand-seam" aria-hidden="true"></div>
@@ -153,7 +160,11 @@
   <div class="ec-grid-bg pointer-events-none absolute inset-0" aria-hidden="true"></div>
   <div class="relative mx-auto max-w-5xl px-5 lg:px-10">
     <!-- Next up, and the track filter. Kept outside #calendarRoot, which holds only the months. -->
-    <div id="calOverview" class="mb-12 empty:hidden"></div>
+    <!-- Its placeholder is tall enough to start the rows below off-screen, so
+         nothing in view moves when the real block replaces it. -->
+    <div id="calOverview" class="mb-12 empty:hidden">
+      <div class="ec-skeleton h-[28rem] rounded-3xl md:h-80" aria-hidden="true"></div>
+    </div>
 
     <div id="calendarRoot" aria-live="polite" aria-busy="true">
       <div class="ec-skeleton h-24 rounded-2xl"></div>
@@ -175,8 +186,8 @@
   <div class="mx-auto max-w-[92rem] px-5 lg:px-10">
     <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
       <div class="flex items-center gap-3">
-        <img src="/assets/logo-day.png" alt="" class="ec-logo-day h-9 w-9" width="36" height="36" />
-        <img src="/assets/logo-night.png" alt="" class="ec-logo-night h-9 w-9" width="36" height="36" />
+        <img src="/assets/logo-day.webp" alt="" class="ec-logo-day h-9 w-9" width="36" height="36" loading="lazy" decoding="async" />
+        <img src="/assets/logo-night.webp" alt="" class="ec-logo-night h-9 w-9" width="36" height="36" loading="lazy" decoding="async" />
         <span class="text-sm">The EthiCraft Club · Pune Institute of Computer Technology, Pune</span>
       </div>
       <div class="flex flex-wrap items-center gap-x-6 text-sm">
@@ -190,9 +201,9 @@
     <div class="ec-ticks mt-9 text-white"></div>
 
     <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-      <span class="ec-label text-ondeep/30">LEARN · CONNECT · GROW</span>
-      <span class="ec-label text-ondeep/30">ALL TIMES IN IST (UTC+05:30)</span>
-      <span id="buildMeta" class="ec-label text-ondeep/30"></span>
+      <span class="ec-label text-ondeep/60">LEARN · CONNECT · GROW</span>
+      <span class="ec-label text-ondeep/60">ALL TIMES IN IST (UTC+05:30)</span>
+      <span id="buildMeta" class="ec-label text-ondeep/60"></span>
     </div>
   </div>
 </footer>

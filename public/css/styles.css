@@ -37,6 +37,9 @@
   /* Solid button fills keep this darker value in BOTH themes so white label
      text stays legible; --brand-magenta lightens in dark mode for text use. */
   --fill-magenta: 192  57 143;
+  /* Small magenta text (date blocks) on --surface-2 needs this darker shade
+     to reach 4.5:1; the brand value only manages 4.2:1 there. */
+  --magenta-ink:  168  38 118;
   --brand-amber:  247 168  27;
   --brand-amber-dk: 150 104  34;  /* darkened from #d1902f: icons + chip text need AA */
 
@@ -76,6 +79,7 @@
   --brand-sky-dk:   69 190 232;
   --brand-magenta: 232 106 184;
   --fill-magenta:  192  57 143;   /* deliberately unchanged: see :root */
+  --magenta-ink:   232 106 184;
   --brand-amber:   251 191  60;
   --brand-amber-dk:247 168  27;
 
@@ -185,6 +189,8 @@ header, main, footer { position: relative; z-index: 2; }
 .ec-nav:not([data-scrolled="true"]) .ec-nav-ink { color: #fff; }
 .ec-nav:not([data-scrolled="true"]) .ec-nav-ink-soft { color: rgb(255 255 255 / 78%); }
 .ec-nav:not([data-scrolled="true"]) .ec-nav-ink-soft:hover { color: #fff; }
+/* Brand magenta only reaches 3.2:1 on the hero photo; this pink reaches 7.8:1. */
+.ec-nav:not([data-scrolled="true"]) .ec-nav-accent { color: #f299cc; }
 .ec-nav:not([data-scrolled="true"]) .ec-theme-toggle {
   color: #fff;
   border-color: rgb(255 255 255 / 30%);
@@ -229,9 +235,19 @@ header, main, footer { position: relative; z-index: 2; }
 .ec-hero-photo {
   background-image:
     linear-gradient(to bottom, var(--hero-scrim-1), var(--hero-scrim-2)),
-    var(--hero-src, none);
+    url('/assets/hero-bg-960.webp');
   background-size: cover;
   background-position: center 38%;
+}
+/* Phones get the 960px photo and larger screens the 1600px one. Under the
+   scrim the difference is invisible, but the phone file is a third the size.
+   The preload links in index.html use the same breakpoint. */
+@media (min-width: 768px) {
+  .ec-hero-photo {
+    background-image:
+      linear-gradient(to bottom, var(--hero-scrim-1), var(--hero-scrim-2)),
+      url('/assets/hero-bg-1600.webp');
+  }
 }
 
 /* Gradient mesh: three offset radial washes, the modern replacement for a
@@ -347,11 +363,16 @@ header, main, footer { position: relative; z-index: 2; }
   font-size: .76rem;
   font-feature-settings: "tnum" 1;
 }
-.ec-spec > .ec-spec-dots {
+/* The dotted leader between key and value. It is a pseudo-element because a
+   <dl> group may only hold dt and dd; `order` slots it between the two. */
+.ec-spec::after {
+  content: "";
+  order: 1;
   border-bottom: 1px dotted rgb(var(--border-strong));
   transform: translateY(-.2em);
 }
-.ec-spec-key { letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.ec-spec > dd { order: 2; }
+.ec-spec-key { letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
 .ec-spec-val { font-weight: 600; text-align: right; }
 
 .ec-ticks {
@@ -625,21 +646,26 @@ header, main, footer { position: relative; z-index: 2; }
    below never jumps. */
 .ec-strip {
   --strip-h: 8.5rem;
+  --strip-pace: 3.4s;   /* --strip-h / 40px a second: see .ec-strip__track */
   display: flex;
   min-height: var(--strip-h);
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
           mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
 }
-@media (min-width: 640px)  { .ec-strip { --strip-h: 11rem; } }
-@media (min-width: 1024px) { .ec-strip { --strip-h: 13rem; } }
+@media (min-width: 640px)  { .ec-strip { --strip-h: 11rem; --strip-pace: 4.4s; } }
+@media (min-width: 1024px) { .ec-strip { --strip-h: 13rem; --strip-pace: 5.2s; } }
 
 .ec-strip__track {
   flex-shrink: 0;
   display: flex;
   gap: .75rem;
   padding-right: .75rem;
-  animation: ec-marquee var(--strip-duration, 70s) linear infinite;
+  animation: ec-marquee 70s linear infinite;
+  /* About 40px a second at every size, worked out without measuring the page:
+     each photo is --strip-h tall, so its width is that times its aspect ratio.
+     The script sums the ratios; .3s a photo covers the .75rem gap after it. */
+  animation-duration: max(30s, calc(var(--strip-ratios) * var(--strip-pace) + var(--strip-count) * .3s));
 }
 .ec-strip:hover .ec-strip__track,
 .ec-strip:focus-within .ec-strip__track { animation-play-state: paused; }
@@ -886,8 +912,10 @@ header, main, footer { position: relative; z-index: 2; }
 .ec-filter__count {
   font-family: var(--ec-mono);
   font-size: .75rem;
-  opacity: .65;
+  opacity: .9;
 }
+
+.ec-date-accent { color: rgb(var(--magenta-ink)); }
 
 @media (prefers-reduced-motion: reduce) {
   .ec-tl-item.is-today::before { animation: none; }

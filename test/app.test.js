@@ -203,6 +203,33 @@ describe('authentication', () => {
       await (second || first).stop();
     }
   });
+
+  // Behind Cloudflare, req.ip is one of Cloudflare's shared, rotating addresses.
+  // Counting by it let one stranger's failed guesses lock everyone out.
+  const asVisitor = (ip, password) => fetch(`${base}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
+    body: JSON.stringify({ username: TEST_ADMIN.username, password }),
+  });
+
+  test('a lockout holds back only the visitor who earned it', async () => {
+    let status;
+    for (let i = 0; i < 12 && status !== 429; i += 1) status = (await asVisitor('203.0.113.66', `wrong-${i}`)).status;
+    assert.equal(status, 429, 'the guesser is locked out');
+    assert.equal((await asVisitor('198.51.100.23', TEST_ADMIN.password)).status, 200,
+      'the admin, on another connection, still signs in');
+  });
+
+  test('rate limits count each visitor behind Cloudflare separately', async () => {
+    const remaining = async (headers) => Number(
+      (await fetch(`${base}/api/calendar`, { headers })).headers.get('ratelimit-remaining'));
+    const first = await remaining({ 'CF-Connecting-IP': '203.0.113.7' });
+    assert.equal(await remaining({ 'CF-Connecting-IP': '203.0.113.7' }), first - 1, 'one visitor, one count');
+    assert.equal(await remaining({ 'CF-Connecting-IP': '198.51.100.9' }), 299, 'another visitor starts fresh');
+    // A header that is not an address is ignored, not used as a free new key.
+    const plain = await remaining({});
+    assert.equal(await remaining({ 'CF-Connecting-IP': 'garbage' }), plain - 1);
+  });
 });
 
 /* ========================================================== public events API */
@@ -414,7 +441,7 @@ describe('poster uploads', () => {
       body: formData({}, { buffer: JPEG_MIN, type: 'image/jpeg', name: 'b.jpg' }),
     }));
 
-    // Posters are cached for a day without revalidating, so a browser that saw
+    // Posters are cached for a year without revalidating, so a browser that saw
     // the old one only fetches the new one if the URL changes. A new ETag alone
     // is never consulted while the cached copy is still fresh.
     const [path, oldVersion] = url.split('?');
@@ -453,6 +480,24 @@ describe('poster uploads', () => {
 
     const second = await fetch(`${base}${withPoster.posterPath}`, { headers: { 'If-None-Match': etag } });
     assert.equal(second.status, 304, 'repeat visitors are not re-sent the bytes');
+  });
+
+  test('only the current poster URL is cached for good; any other revalidates', async () => {
+    const created = await json(await fetch(`${base}/api/admin/events`, {
+      method: 'POST', headers: jar.header,
+      body: formData({ title: 'Cache me', eventDate: '2027-05-07', mode: 'Offline' },
+        { buffer: PNG_1PX, type: 'image/png', name: 'a.png' }),
+    }));
+    const url = created.event.posterPath;
+    const current = await fetch(`${base}${url}`);
+    assert.equal(current.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+
+    const bare = url.split('?')[0];
+    for (const other of [bare, `${bare}?v=1`]) {
+      const res = await fetch(`${base}${other}`);
+      assert.equal(res.status, 200, other);
+      assert.equal(res.headers.get('cache-control'), 'no-cache', `${other} must not be pinned for a year`);
+    }
   });
 });
 
@@ -1014,6 +1059,18 @@ describe('FY calendar', () => {
     assert.match(await (await fetch(`${base}/sitemap.xml`)).text(), /<loc>https:\/\/ethicraft\.in\/calendar<\/loc>/);
   });
 
+  test('the heading names the academic year before any script runs', async () => {
+    // Academic years run July to June, by the date in India.
+    const [y, m] = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' })
+      .format(new Date()).split('-').map(Number);
+    const start = m >= 7 ? y : y - 1;
+    const label = `${start}–${String(start + 1).slice(2)}`;
+    const html = await (await fetch(`${base}/calendar`)).text();
+    assert.ok(html.includes(`<title>FY Calendar ${label} | EthiCraft Club PICT</title>`), 'title');
+    assert.ok(html.includes(`<span id="calYearTitle" class="ec-gradient-text">${label}</span>`), 'heading');
+    assert.ok(!html.includes('{{'), 'no placeholder left in the page');
+  });
+
   test("the programme's schedule from its poster is seeded, earliest first", async () => {
     const entries = await entriesNow();
     assert.equal(entries.length, 17);
@@ -1105,20 +1162,55 @@ describe('homepage changes', () => {
     assert.doesNotMatch(join, /Email us to join|tel:/, 'one button, not two');
   });
 
-  test('the logo follows the theme, from background-free PNGs', async () => {
+  test('the logo follows the theme, from small background-free images', async () => {
     for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
       const html = await (await fetch(`${base}${p}`)).text();
-      assert.match(html, /<img src="\/assets\/logo-day\.png"[^>]*class="ec-logo-day/, `${p}: day logo`);
-      assert.match(html, /<img src="\/assets\/logo-night\.png"[^>]*class="ec-logo-night/, `${p}: night logo`);
+      assert.match(html, /<img src="\/assets\/logo-day\.webp"[^>]*class="ec-logo-day/, `${p}: day logo`);
+      assert.match(html, /<img src="\/assets\/logo-night\.webp"[^>]*class="ec-logo-night/, `${p}: night logo`);
       assert.doesNotMatch(html, /<img src="\/assets\/logo\.png"/, `${p}: no boxed logo left on the page`);
     }
     const css = await (await fetch(`${base}/css/styles.css`)).text();
     assert.match(css, /:root:not\(\[data-theme="dark"\]\) \.ec-logo-night,\s*\[data-theme="dark"\] \.ec-logo-day \{ display: none !important; \}/);
-    for (const file of ['logo-day.png', 'logo-night.png']) {
-      const png = Buffer.from(await (await fetch(`${base}/assets/${file}`)).arrayBuffer());
-      assert.equal(png.toString('latin1', 12, 16), 'IHDR');
-      assert.equal(png[25], 6, `${file} carries an alpha channel (RGBA)`);
+    for (const file of ['logo-day.webp', 'logo-night.webp']) {
+      const res = await fetch(`${base}/assets/${file}`);
+      assert.equal(res.headers.get('content-type'), 'image/webp');
+      const webp = Buffer.from(await res.arrayBuffer());
+      assert.equal(webp.toString('latin1', 0, 4) + webp.toString('latin1', 8, 16), 'RIFFWEBPVP8X');
+      assert.ok(webp[20] & 0x10, `${file} carries an alpha channel`);
+      // Both themes' logos load on every page, so each must stay small.
+      assert.ok(webp.length < 20 * 1024, `${file} is ${webp.length} bytes`);
     }
+  });
+
+  test('the hero photo is preloaded at the size the CSS will use', async () => {
+    const html = await (await fetch(`${base}/`)).text();
+    const css = await (await fetch(`${base}/css/styles.css`)).text();
+    const preloads = [...html.matchAll(/<link rel="preload" as="image" href="([^"]+)"[^>]*media="([^"]+)"/g)]
+      .map(([, href, media]) => ({ href, media }));
+    assert.deepEqual(preloads, [
+      { href: '/assets/hero-bg-960.webp', media: '(max-width: 767.98px)' },
+      { href: '/assets/hero-bg-1600.webp', media: '(min-width: 768px)' },
+    ]);
+    // The phone file is the default, and the large one takes over at 768px:
+    // the same split as the preloads, so neither is fetched twice.
+    assert.match(css, /\.ec-hero-photo \{[^}]*url\('\/assets\/hero-bg-960\.webp'\)/);
+    assert.match(css, /@media \(min-width: 768px\) \{\s*\.ec-hero-photo \{[^}]*url\('\/assets\/hero-bg-1600\.webp'\)/);
+    for (const { href } of preloads) {
+      const res = await fetch(`${base}${href}`);
+      assert.equal(res.status, 200, href);
+      assert.equal(res.headers.get('content-type'), 'image/webp', href);
+    }
+  });
+
+  test('the tab icon is small, not the full-size logo', async () => {
+    for (const p of ['/', '/calendar', `${TEST_ADMIN.path}/login`, '/no-such-page']) {
+      const html = await (await fetch(`${base}${p}`)).text();
+      assert.match(html, /<link rel="icon" href="\/assets\/favicon\.png"/, `${p}: favicon`);
+    }
+    const icon = await fetch(`${base}/assets/favicon.png`);
+    assert.equal(icon.status, 200);
+    assert.ok(Number(icon.headers.get('content-length')) < 10 * 1024, 'favicon under 10 KB');
+    assert.equal((await fetch(`${base}/assets/apple-touch-icon.png`)).status, 200);
   });
 
   test('the page has the activity strip, the featured poster, the gallery and a gallery lightbox', async () => {
